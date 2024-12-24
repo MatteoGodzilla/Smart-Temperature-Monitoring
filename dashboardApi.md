@@ -1,0 +1,31 @@
+Route di controllo manuale remoto
+- */api/isFree*
+  - richiesta senza nessun dato inviato
+  - scopo: sapere se è possibile prendere il controllo
+  - restituisce: un booleano, true per indicare se la dashboard può prendere il controllo
+- */api/takeControl*
+  - richiesta senza nessun dato inviato
+  - scopo: richiesta effettiva di presa controllo dalla dashboard
+  - restituisce: un booleano, true se la dashboard ha preso il controllo effettivamente
+- */api/control*
+  - richiesta dove viene passato un json `{ "position": <val> }`
+  - scopo: regolazione effettiva del motore, una volta che la dashboard ha preso il controllo
+  - `<val>` è un float nel range [0,1] dove indica la percentuale di apertura della finestra
+  - restituisce: un oggetto json uguale a quello di partenza che contiene la posizione attuale del motore
+    - nel caso in cui dashboard A ha il controllo e dashboard B manda una richiesta su questa route, b riceve la posizione effettiva del motore, resettando lo slider e facendo capire all'uomo dietro dashboard B che il suo cambiamento è stato ignorato
+- */api/releaseControl*
+  - richiesta senza nessun dato inviato
+  - scopo: restituizione esplicita del controllo dalla dashboard alla control unit
+  - ci deve essere un timer lato control unit per cui se non riceve nessuna richiesta dalla dashboard entro K secondi, cede il controllo in automatico, altrimenti ci si imbatte in deadlock del sistema
+  - restituisce: niente (?)
+
+Route di ottenimento dati
+- */api/temperature*
+  - richiesta senza nessun dato inviato
+  - scopo: ottenere i dati di temperatura da mostrare nel grafico della dashboard
+  - restituisce: un oggetto json `{ "dataPoints": [ <dataPoint> ], "minimum": <min>, "average": <avg>, "maximum": <max> }`, dove:
+    - `dataPoint = {"timestamp": <time>, "temp": <temp> }`
+      - `time` e `temp` sono float
+    - `min`, `avg` e `max` sono float
+  - il numero di dataPoint restituiti viene deciso dalla control unit
+  - restituisce sempre gli N punti di temperatura più recenti 
