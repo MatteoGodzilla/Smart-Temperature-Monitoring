@@ -20,12 +20,21 @@ Route di controllo manuale remoto
   - restituisce: niente (?)
 
 Route di ottenimento dati
-- */api/temperature*
+- */api/history*
   - richiesta senza nessun dato inviato
   - scopo: ottenere i dati di temperatura da mostrare nel grafico della dashboard
   - restituisce: un oggetto json `{ "dataPoints": [ <dataPoint> ], "minimum": <min>, "average": <avg>, "maximum": <max> }`, dove:
-    - `dataPoint = {"timestamp": <time>, "temp": <temp> }`
+    - `dataPoint = {"timestamp": <time>, "temp": <temp>, "window": <window> }`
       - `time` e `temp` sono float
-    - `min`, `avg` e `max` sono float
+      - `window` è un float nel range [0,1]
+    - `min`, `avg` e `max` sono float e vengono calcolati solo per la temperatura
   - il numero di dataPoint restituiti viene deciso dalla control unit
-  - restituisce sempre gli N punti di temperatura più recenti 
+  - restituisce sempre gli N punti di temperatura più recenti
+- */api/status*
+  - richiesta senza nessun dato inviato
+  - scopo: ottenere le informazioni attuali del sistema, in particolare stato, temperatura e apertura finestra
+  - restituisce: un oggetto json `{ "status": <status> , "mode": <mode>, "dataPoint": <dataPoint>, "nextStatus": <nextPoll>}` dove
+    - `status` è un int per rappresentare `NORMAL, HOT, TOO_HOT, ALARM`
+    - `mode` è un int per rappresentare `AUTOMATIC, LOCAL MANUAL, REMOTE MANUAL`
+    - `dataPoint` è un oggetto json come sopra
+    - `nextStatus` è un int che indica tra quanto la dashboard dovrebbe mandare un'altra richiesta di status

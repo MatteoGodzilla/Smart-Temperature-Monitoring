@@ -1,0 +1,28 @@
+body{
+    box-sizing: border-box;
+    height: 100vh;
+    margin: 0px;
+}
+
+main {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 70%;
+    height: 100%;
+    padding: 10px;
+    vertical-align: middle;
+}
+
+main > div{
+    width: 100%;
+    height: 100%;
+}
+
+aside{
+    display: inline-block;
+    box-sizing: border-box;
+    width: 30%;
+    padding: 10px;
+    vertical-align: middle;
+}
+

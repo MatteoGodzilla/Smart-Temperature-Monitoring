@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Temperature Control Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <main>
+        <div>
+            <canvas id="plotCanvas"></canvas>
+        </div>
+    </main><aside>
+        <p>Current status:</p>
+        <span id="status">NORMAL</span>
+        <br/>
+        <p>Current mode:</p>
+        <span id="mode">AUTOMATIC</span>
+        <br/>
+        <p>Current temperature:</p>
+        <span id="mode">69</span>
+        <p>°C</p>
+        <br/>
+        <p>Current window open %:</p>
+        <span id="mode">100</span>
+        <p>%</p>
+        <br/>
+        <button id="requestControl">Request control</button>
+        <label for="windowOpenPerc">Window open percentage</label>
+        <input type="range" name="windowOpenPerc" id="windowOpenPerc">
+        <button id="fixAlarm" disabled>Fix alarm</button>
+    </aside>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
