@@ -3,7 +3,7 @@
 class Task{
     public:
         bool isActive();
-        virtual void excecute() = 0;
+        virtual void execute() = 0;
 
     protected:
         bool active;

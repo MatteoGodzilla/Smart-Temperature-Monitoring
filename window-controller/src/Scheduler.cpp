@@ -17,7 +17,7 @@ bool Scheduler::addTask(Task* task){
 void Scheduler::schedule(){
     for(int i = 0; i < nTask; i++) {
         if(tasks[i]->isActive()) {
-            tasks[i]->excecute();
+            tasks[i]->execute();
         }
     }
 }

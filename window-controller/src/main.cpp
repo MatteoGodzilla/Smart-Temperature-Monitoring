@@ -1,19 +1,30 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include "pins.h"
 #include "Scheduler.h"
+#include "FiniteStateMachine.h"
+#include "LCDManager.h"
 
 Scheduler scheduler;
 
 void setup() {
-  // put your setup code here, to run once:
+  //Initialize pins
   pinMode(BTN, INPUT);
   pinMode(POT, INPUT);
   pinMode(MOTOR, OUTPUT);
 
+  //Initialize scheduler and create tasks
   scheduler.init();
+  FiniteStateMachine* fsm = new FiniteStateMachine();
+
+  LCDManager* lcd = new LCDManager();
+  scheduler.addTask(lcd);
+
+  //Bind tasks each other if necessary
+  lcd->bindFSM(fsm);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  //Starting the execution
   scheduler.schedule();
 }

@@ -1,5 +1,5 @@
 #include "Task.h"
 
-bool Task::isActive() {
+bool Task::isActive(){
     return active;
 }
