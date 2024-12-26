@@ -19,5 +19,5 @@ class LCDManager : public Task{
         void bindFSM(FiniteStateMachine* fsmtask);
         void setWindowLevel(float windowLevel);
         void setTemperature(float tempValue);
-        void execute() override;
+        virtual void execute() override;
 };

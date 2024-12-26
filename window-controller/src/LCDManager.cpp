@@ -32,23 +32,22 @@ void LCDManager::execute(){
             case AUTOMATIC:
                 lcd.setCursor(0,0);
                 lcd.printstr("WINDOW OPENING: ");
-                //lcd.printstr(openingLevel*100);
-                lcd.printstr("90");
+                //lcd.print(openingLevel*100);
                 lcd.printstr("%");
                 lcd.setCursor(0,1);
                 lcd.printstr("AUTOMATIC");
                 break;
             case MANUAL:
                 lcd.setCursor(0,0);
-                //lcd.printstr("WINDOW OPENING: ");
-                //lcd.printstr(openingLevel*100);
-                //lcd.printstr("%");
+                lcd.printstr("WINDOW OPENING: ");
+                //lcd.print(openingLevel*100);
+                lcd.printstr("%");
                 lcd.setCursor(0,1);
                 lcd.printstr("MANUAL");
                 lcd.setCursor(0,2);
-                //lcd.printstr("TEMPERATURE: ");
-                //lcd.printstr(temp);
-                //lcd.printstr("°C");
+                lcd.printstr("TEMPERATURE: ");
+                //lcd.print(temp);
+                lcd.printstr(" C");
                 break;
             default:
                 lcd.setCursor(0,0);

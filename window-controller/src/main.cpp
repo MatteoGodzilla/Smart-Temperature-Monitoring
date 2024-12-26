@@ -4,6 +4,7 @@
 #include "Scheduler.h"
 #include "FiniteStateMachine.h"
 #include "LCDManager.h"
+#include "SerialCommunicator.h"
 
 Scheduler scheduler;
 
@@ -17,11 +18,16 @@ void setup() {
   scheduler.init();
   FiniteStateMachine* fsm = new FiniteStateMachine();
 
-  LCDManager* lcd = new LCDManager();
-  scheduler.addTask(lcd);
+  SerialCommunicator* serialCommunicatorTask = new SerialCommunicator();
+  scheduler.addTask(serialCommunicatorTask);
+
+  LCDManager* lcdTask = new LCDManager();
+  scheduler.addTask(lcdTask);
 
   //Bind tasks each other if necessary
-  lcd->bindFSM(fsm);
+  serialCommunicatorTask->bindFSM(fsm);
+  serialCommunicatorTask->bindLCD(lcdTask);
+  lcdTask->bindFSM(fsm);
 }
 
 void loop() {
