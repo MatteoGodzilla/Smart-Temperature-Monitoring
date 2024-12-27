@@ -41,14 +41,14 @@ void SerialCommunicator::execute(){
         input.trim();
         if(input.length() > 0) {
             String c = input.substring(0,2);
-            //After c there is the value [0.01,1.00] for opening the window when the status is AUTOMATIC
+            //After c there is the value [0.00,1.00] for opening the window when the status is AUTOMATIC
             if(fsm->state == AUTOMATIC && c.equals("P:")) {
                 String value = input.substring(2);
                 //Casting the value read in float
                 float percentage = value.toFloat();
-                //Check if the value is in the range [0.01,1.00]
+                //Check if the value is in the range [0.00,1.00]
                 percentage = (percentage > 1.00) ? 1.00 : percentage;
-                percentage = (percentage < 0.01) ? 0.01 : percentage;
+                percentage = (percentage < 0.00) ? 0.00 : percentage;
                 lcd->setWindowLevel(percentage);
                 window->setWindowPercentage(percentage);
             }

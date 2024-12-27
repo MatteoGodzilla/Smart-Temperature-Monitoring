@@ -22,7 +22,7 @@ void Window::bindLCD(LCDManager* lcdTask){
 
 void Window::setWindowPercentage(float percentage){
     int opening = round(percentage*100);
-    int angle = map(opening, 1, 100, CLOSED_WINDOW, FULL_OPEN);
+    int angle = map(opening, 0, 100, CLOSED_WINDOW, FULL_OPEN);
     servoMotor.write(angle);
 }
 
@@ -50,13 +50,15 @@ void Window::execute(){
             break;
         case MANUAL:
             /*
-            * In MANUAL mode, the opening level of the window can be modified with a potentiometer
+            * In MANUAL mode, the opening level of the window can be modified with a potentiometer and
+            * this value must be send on the Serial Monitor
             */
             int currentPot = analogRead(POT);
             if(currentPot != lastCurrentPot) {
-                float convertedValue = mapFloat(currentPot, 0, 1023, 0.01, 1.00);
+                float convertedValue = mapFloat(currentPot, 0, 1023, 0.00, 1.00);
                 lcd->setWindowLevel(convertedValue);
                 setWindowPercentage(convertedValue);
+                sc->sendOpeningWindow(convertedValue);
             }
             lastCurrentPot = currentPot;
             /*
