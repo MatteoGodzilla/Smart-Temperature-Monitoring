@@ -1,9 +1,8 @@
-import ThreadLogics
+import deamons
 import time
 
 if __name__=="__main__":
-    flask = ThreadLogics.FlaskThread()
-    flask.daemon = True
+    flask = deamons.FlaskDeamon()
     flask.start()
     try:
         while True:
