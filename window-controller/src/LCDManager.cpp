@@ -7,7 +7,7 @@ LCDManager::LCDManager() :
     lcd.init();
     lcd.backlight();
     active = true;
-    openingLevel = 1;
+    openingLevel = 0;
 }
 
 void LCDManager::bindFSM(FiniteStateMachine* fsmTask){
