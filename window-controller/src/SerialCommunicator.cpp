@@ -1,5 +1,7 @@
 #include "SerialCommunicator.h"
 
+#include "Window.h"
+
 SerialCommunicator::SerialCommunicator(){
     active = true;
     Serial.begin(9600);
@@ -13,10 +15,14 @@ void SerialCommunicator::bindFSM(FiniteStateMachine* fsmTask){
     fsm = fsmTask;
 }
 
-//Mandiamo lo stato vero e proprio oppure un comando di cambio stato???
+void SerialCommunicator::bindWindow(Window* windowTask){
+    window = windowTask;
+}
+
 //Method to send the state of the FSM to control unit
-void SerialCommunicator::sendState(){
-    Serial.print("CS");
+void SerialCommunicator::sendState(String state){
+    Serial.print("S:");
+    Serial.print(state);
     Serial.println(";");
     Serial.flush();
 }
@@ -31,24 +37,31 @@ void SerialCommunicator::sendOpeningWindow(float val){
 void SerialCommunicator::execute(){
     if(Serial.available() > 0) {
         String input = Serial.readStringUntil(';');
-        //Per assicurarsi che vengano eliminati spazi iniziali, spazi finali e caratteri di controllo
+        //To ensure that leading spaces, trailing spaces and control characters are removed
         input.trim();
         if(input.length() > 0) {
             String c = input.substring(0,2);
-            //Dopo c c'è il valore [0,1] di apertura della finestra
-            if(c.equals("P:")) {
+            //After c there is the value [0.01,1.00] for opening the window when the status is AUTOMATIC
+            if(fsm->state == AUTOMATIC && c.equals("P:")) {
                 String value = input.substring(2);
-                lcd->setWindowLevel(value.toFloat());
+                //Casting the value read in float
+                float percentage = value.toFloat();
+                //Check if the value is in the range [0.01,1.00]
+                percentage = (percentage > 1.00) ? 1.00 : percentage;
+                percentage = (percentage < 0.01) ? 0.01 : percentage;
+                lcd->setWindowLevel(percentage);
+                window->setWindowPercentage(percentage);
             }
-            //S indica il cambio di stato della FSM
-            else if(c.equals("CS")) {
-                if(fsm->state == AUTOMATIC) {
-                    fsm->state = MANUAL;
-                } else {
+            //S indicates the change of status of the FSM
+            else if(c.equals("S:")) {
+                String stateValue = input.substring(2);
+                if(stateValue.equals("AUTOMATIC")) {
                     fsm->state = AUTOMATIC;
+                } else if(stateValue.equals("MANUAL")) {
+                    fsm->state = MANUAL;
                 }
             }
-            //Dopo c c'è il valore della temperatura
+            //After c there is the temperature value when the status is MANUAL
             else if(fsm->state == MANUAL && c.equals("T:")) {
                 String tempValue = input.substring(2);
                 lcd->setTemperature(tempValue.toFloat());

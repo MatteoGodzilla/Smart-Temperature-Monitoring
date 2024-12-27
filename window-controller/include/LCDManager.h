@@ -8,7 +8,7 @@
 
 class LCDManager : public Task{
     private:
-        float openingLevel;
+        int openingLevel;
         float temp;
         LiquidCrystal_I2C lcd;
         FiniteStateMachine* fsm;

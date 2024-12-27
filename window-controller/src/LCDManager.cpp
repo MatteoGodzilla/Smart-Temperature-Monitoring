@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "LCDManager.h"
 
 LCDManager::LCDManager() :
@@ -8,6 +7,7 @@ LCDManager::LCDManager() :
     lcd.init();
     lcd.backlight();
     active = true;
+    openingLevel = 1;
 }
 
 void LCDManager::bindFSM(FiniteStateMachine* fsmTask){
@@ -16,7 +16,7 @@ void LCDManager::bindFSM(FiniteStateMachine* fsmTask){
 
 //To take the level opening of window from SerialCommunicator
 void LCDManager::setWindowLevel(float windowLevel){
-    openingLevel = windowLevel;
+    openingLevel = round(windowLevel*100);
 }
 
 //To take the value of temperature from SerialCommunicator
@@ -32,7 +32,7 @@ void LCDManager::execute(){
             case AUTOMATIC:
                 lcd.setCursor(0,0);
                 lcd.printstr("WINDOW OPENING: ");
-                //lcd.print(openingLevel*100);
+                lcd.print(openingLevel);
                 lcd.printstr("%");
                 lcd.setCursor(0,1);
                 lcd.printstr("AUTOMATIC");
@@ -40,7 +40,7 @@ void LCDManager::execute(){
             case MANUAL:
                 lcd.setCursor(0,0);
                 lcd.printstr("WINDOW OPENING: ");
-                //lcd.print(openingLevel*100);
+                lcd.print(openingLevel);
                 lcd.printstr("%");
                 lcd.setCursor(0,1);
                 lcd.printstr("MANUAL");
