@@ -1,19 +1,27 @@
+import json
 from flask import Flask
 from threading import Thread
-
+from managers import AccessManager
+'''
+THINKING ABOUT USE DIRECTLY WERKZEUG SERVER INSTEAD OF FLASK, TO HAVE COMPLETE CONTROL ON SERVER BEHAVIOR.
+FOR NOW ALL THE COMUNICATION COMPONENTS ARE IMPLEMENTED AS DEAMONS BUT IN FUTURE MAY BE CONVERTED TO NORMAL THREADS.
+'''
 class FlaskDeamon(Thread):
-    httpserver:Flask = Flask(__name__)
-    SERVER_PORT:int = 80
-    SERVER_IP:str = '0.0.0.0'
-    daemon = True
+    def __init__(self, data_manager:AccessManager):
+        super(FlaskDeamon, self).__init__()
+        self.httpserver:Flask = Flask(__name__)
+        self.manager:AccessManager = data_manager
+        self.httpserver.add_url_rule(rule="/status", endpoint="status", view_func=self.send_temperature)
+        self.httpserver.add_url_rule(rule="/history", endpoint="history", view_func=self.send_all_data)
+        self.SERVER_IP:str = '0.0.0.0'
+        self.SERVER_PORT:int = 80
+        self.daemon:bool = True
 
-    @httpserver.route('/status')
-    def send_temperature():
-        return "temperatura e finestra"
+    def send_temperature(self):
+        return json.dumps(self.manager.getLatest())
 
-    @httpserver.route('/history')
-    def send_all_data():
-        return "all"
+    def send_all_data(self):
+        return json.dumps(self.manager.generateHistory())
 
     def run(self):
         self.httpserver.run(host=self.SERVER_IP, port=self.SERVER_PORT, debug=False)
