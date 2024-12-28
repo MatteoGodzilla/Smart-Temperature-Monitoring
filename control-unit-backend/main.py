@@ -1,10 +1,10 @@
-from managers import AccessManager
+from managers import Manager
 import deamons
 import time
 
 if __name__=="__main__":
-    manager:AccessManager = AccessManager(max_len=200)
-    flask = deamons.FlaskDeamon(data_manager=manager)
+    manager:Manager = Manager(max_datapoints=200)
+    flask = deamons.FlaskDeamon(system_manager=manager)
     flask.start()
     try:
         while True:
