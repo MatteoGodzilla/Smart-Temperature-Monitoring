@@ -14,24 +14,29 @@
             <canvas id="plotCanvas"></canvas>
         </div>
     </main><aside>
-        <p>Current status:</p>
-        <span id="status">NORMAL</span>
-        <br/>
-        <p>Current mode:</p>
-        <span id="mode">AUTOMATIC</span>
-        <br/>
-        <p>Current temperature:</p>
-        <span id="mode">69</span>
-        <p>°C</p>
-        <br/>
-        <p>Current window open %:</p>
-        <span id="mode">100</span>
-        <p>%</p>
-        <br/>
-        <button id="requestControl">Request control</button>
-        <label for="windowOpenPerc">Window open percentage</label>
-        <input type="range" name="windowOpenPerc" id="windowOpenPerc">
-        <button id="fixAlarm" disabled>Fix alarm</button>
+        <h1>Info</h1>
+        <section>
+            <span class="header">Current status:</span>
+            <span id="status">NORMAL</span>
+            <br/>
+            <span class="header">Current mode:</span>
+            <span id="mode">AUTOMATIC</span>
+            <br/>
+            <span class="header">Current temperature:</span>
+            <span id="temp">69°C</span>
+            <br/>
+            <span class="header">Current window open %:</span>
+            <span id="window%">100%</span>
+            <br/>
+        </section>
+        <h1>Control</h1>
+        <section>
+            <button id="requestControl">Request control</button>
+            <label for="windowOpenPerc">Window open %:</label>
+            <span id="userWindow%">50%</span>
+            <input type="range" name="windowOpenPerc" id="windowOpenPerc" disabled>
+            <button id="fixAlarm" disabled>Fix alarm</button>
+        </section>
     </aside>
 
     <!-- Scripts -->

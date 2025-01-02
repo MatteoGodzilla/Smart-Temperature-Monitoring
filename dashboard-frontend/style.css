@@ -1,8 +1,12 @@
 body{
+    background-color: hsl(0, 0%, 85%);
     box-sizing: border-box;
     height: 100vh;
     margin: 0px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
+
+/* --- MAIN --- */
 
 main {
     display: inline-block;
@@ -18,11 +22,43 @@ main > div{
     height: 100%;
 }
 
+/* --- ASIDE --- */
+
 aside{
+    background-color: white;
+    border-radius: 20px;
     display: inline-block;
     box-sizing: border-box;
-    width: 30%;
+    width: 29%;
     padding: 10px;
     vertical-align: middle;
+    margin-right: 1%;
 }
 
+aside > h1 {
+    text-align: center;
+}
+
+aside > section{
+    margin: 20px;
+}
+
+aside > section > span.header, aside > section > label {
+    color: hsl(234, 50%, 50%);
+    padding-left: 0px;
+}
+
+aside > section > span {
+    padding-left: 2em;
+}
+
+aside > section > button, aside > section > input{
+    display: block;
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+aside > section > button {
+    font-size: 1.2em;
+}
