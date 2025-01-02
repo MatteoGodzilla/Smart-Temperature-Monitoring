@@ -70,7 +70,7 @@ async function updateHistory(){
 }
 
 async function getStatus(){
-    const url = route = "/status"
+    const url = route + "/status"
 }
 
 updateHistory();

@@ -33,8 +33,9 @@ Route di ottenimento dati
 - */api/status*
   - richiesta senza nessun dato inviato
   - scopo: ottenere le informazioni attuali del sistema, in particolare stato, temperatura e apertura finestra
-  - restituisce: un oggetto json `{ "status": <status> , "mode": <mode>, "dataPoint": <dataPoint>, "nextStatus": <nextPoll>}` dove
+  - restituisce: un oggetto json `{ "status": <status> , "mode": <mode>, "dataPoint": <dataPoint>, "minimum": <min>, "average": <avg>, "maximum": <max>, "nextStatus": <nextPoll>}` dove
     - `status` è un int per rappresentare `NORMAL, HOT, TOO_HOT, ALARM`
     - `mode` è un int per rappresentare `AUTOMATIC, LOCAL MANUAL, REMOTE MANUAL`
     - `dataPoint` è un oggetto json come sopra
-    - `nextStatus` è un int che indica tra quanto la dashboard dovrebbe mandare un'altra richiesta di status
+    - `min`, `avg` e `max` sono definiti come sopra, includendo il dataPoint restituito
+    - `nextStatus` è un int che indica tra quanto la dashboard dovrebbe mandare un'altra richiesta di status in millisecondi
