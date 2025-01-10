@@ -27,8 +27,9 @@ void Window::setWindowPercentage(float percentage){
 }
 
 //Method to provide a map function for float number
+//In our case is (x-0.00)*((1.00-0.00)/(1023-0)) + 0.00
 float mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    return (x - in_min) * ((out_max - out_min) / (in_max - in_min)) + out_min;
 }
 
 void Window::execute(){
