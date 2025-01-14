@@ -13,5 +13,9 @@ class SerialThread(Thread):
         self.running = True
         self.serial_line = serial.Serial(baudrate=self.BAUDRATE)
     def run(self):
-        # Find a way to connect the serial port
-        pass
+        try:
+            self.serial_line.open()
+            while self.running:
+                print("Serial Thread: Reading from serial line: ", self.serial_line.readline())
+        except serial.SerialException:
+                print("Serial Thread: Unable to open serial port, end routine.")
