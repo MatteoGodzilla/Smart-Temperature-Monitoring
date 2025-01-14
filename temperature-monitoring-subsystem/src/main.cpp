@@ -1,55 +1,70 @@
 #include <Arduino.h>
-#include "esp_adc_cal.h"
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+#include "credentials.h"
+#include "temperature.h"
 
 #define GREEN_LED 15
 #define RED_LED 2
 //TEMP_SENSOR_GPIO AND TEMP_SENSOR_ADC_CHANNEL MUST REFER TO THE SAME
 #define TEMP_SENSOR_GPIO 36
 #define TEMP_SENSOR_ADC_CHANNEL ADC_CHANNEL_0
-//the code is written to use ADC1, because we also have to use the wifi module, which conflicts with ADC2
 
-esp_adc_cal_characteristics_t adcCurve;
+WiFiClient espClient;
+PubSubClient client(espClient);
 
-#define TEMPERATURE_AVERAGE_SIZE 100
-uint32_t readingBuffer[TEMPERATURE_AVERAGE_SIZE] = {};
-int writeIndex = 0;
+long lastPush;
+long nextSample = 3000;
 
 void setup() {
     pinMode(GREEN_LED, OUTPUT);
     pinMode(RED_LED, OUTPUT);
     pinMode(TEMP_SENSOR_GPIO, INPUT);
     Serial.begin(115200);
-    //setup adc curve
-    analogSetPinAttenuation(TEMP_SENSOR_GPIO, ADC_11db);
-    esp_adc_cal_value_t returnType = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, ESP_ADC_CAL_VAL_EFUSE_VREF, &adcCurve);
+
+    Temperature::init(TEMP_SENSOR_GPIO, TEMP_SENSOR_ADC_CHANNEL);
+
+    digitalWrite(GREEN_LED, LOW);
+    digitalWrite(RED_LED, HIGH);
+
     //connect to mqtt
-}
-
-void pushReading(){
-    //note that the ADC in esp32 is not perfectly linear, but we'll pretent it is
-    uint32_t voltagemV;
-    esp_adc_cal_get_voltage(TEMP_SENSOR_ADC_CHANNEL, &adcCurve, &voltagemV);
-    readingBuffer[writeIndex] = voltagemV;
-    writeIndex = (writeIndex + 1) % TEMPERATURE_AVERAGE_SIZE;
-}
-
-//the ADC is very, VERY noisy, so we take an average of the last N samples and use that as a value
-double getAverageReading(){
-    double sum = 0;
-    for(int i = 0; i < TEMPERATURE_AVERAGE_SIZE; i++){
-        sum += readingBuffer[i];
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    while(WiFi.status() != WL_CONNECTED){
+        delay(500);
+        Serial.print(".");
     }
-    return sum / TEMPERATURE_AVERAGE_SIZE;
+
+    //we can assume from this point on that wifi is already connected
+
+    client.setServer(MQTT_BROKER, MQTT_PORT);
+    lastPush = millis();
 }
 
 void loop() {
-    pushReading();
-    double voltagemV = getAverageReading();
-    //TMP36 provides a 750mV output at 25°C
-    //it has an output scale of 10mV / °C
-    double temperature = (voltagemV - 750.0) / 10 + 25.0;
+    if(!client.connected()){
+        digitalWrite(RED_LED, HIGH);
+        digitalWrite(GREEN_LED, LOW);
 
-    Serial.print(voltagemV);
-    Serial.print("\t|");
-    Serial.println(temperature);
+        if(!client.connect(CLIENT_NAME)){
+            //there was an error
+            Serial.println("Connection to MQTT Broker failed!");
+            Serial.println(client.state());
+            delay(5000);
+        }
+    } else {
+        digitalWrite(RED_LED, LOW);
+        digitalWrite(GREEN_LED, HIGH);
+
+        Temperature::pushReading();
+
+        long now = millis();
+        if(now - lastPush > nextSample){
+            double temperature = Temperature::getAverageTemperature();
+            //send through mqtt
+            //Serial.println(temperature);
+            lastPush = now;
+        }
+
+    }
 }
