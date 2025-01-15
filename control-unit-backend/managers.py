@@ -60,18 +60,18 @@ class TemperatureAccessManager():
         self.datapoints:deque = deque(maxlen=self.DATAPOINT_BUFFER)
 
         # TEST VALUES ZONE - REMOVE ON RELEASE
-        self.enqueueDataPoint(1000, 34.55, 0.24)
-        self.enqueueDataPoint(2000, 30.45, 0.14)
-        self.enqueueDataPoint(2500, 38.50, 0.86)
-        self.enqueueDataPoint(4250, 26.76, 0.03)
-        self.enqueueDataPoint(4555, 28.73, 0.08)
-        self.enqueueDataPoint(4650, 27.72, 0.01)
+        self.enqueueDataPoint(1000.50, 34.55, 0.24)
+        self.enqueueDataPoint(2000.23, 30.45, 0.14)
+        self.enqueueDataPoint(2500.45, 38.50, 0.86)
+        self.enqueueDataPoint(4250.00, 26.76, 0.03)
+        self.enqueueDataPoint(4555.00, 28.73, 0.08)
+        self.enqueueDataPoint(4650.00, 27.72, 0.01)
         # END TEST ZONE
 
     # This method will be called when a new datapoint is received from ESP32 using MQTT.
     # TODO: Manage race conditions between writer (Thread MQTT) and reader (Thread Flask).
     def enqueueDataPoint(self, timestamp:float, temperature:float, window:float) -> None:
-        # IF the deque is full, then remove the oldest datapoint inserted.
+        # If the deque is full, then remove the oldest datapoint inserted.
         if len(self.datapoints) == self.DATAPOINT_BUFFER:
             # Remove from the sum the temperature value of the removed datapoint before the pop.
             self.temperatureSUM -= self.datapoints[0]['temperature']
@@ -103,15 +103,22 @@ class TemperatureAccessManager():
 class WindowManager():
     def __init__(self):
         self.position:float = 0.00
+        self.active_mode = Mode.AUTOMATIC
 
-    def automatic_move(self) -> None:
-        pass
-
-    def move(self, position:float) -> None:
+    def move(self, position:float = 0.00) -> None:
         self.position = position
 
     def get_position(self) -> float:
-        pass
+        return self.position
+
+    def set_mode(self, mode:Mode) -> None:
+        self.active_mode = mode
+
+    def get_mode(self) -> Mode:
+        return self.active_mode
+
+    def check_mode(self, mode_to_check:Mode) -> bool:
+        return ( self.active_mode == mode_to_check )
 
 class Manager():
     def __init__(self, max_datapoints=5):
@@ -120,8 +127,8 @@ class Manager():
         self.FIRST_THRESHOLD:float = 27.00
         self.SECOND_THRESHOLD:float = 35.00
         self.TIME_TO_ALARM:float = 10.00
-        self.timer:Timer = Timer(self.TIME_TO_ALARM)
-        self.active_mode:Mode = Mode.AUTOMATIC
+        self.alarm_timer:Timer = Timer(wait_time=self.TIME_TO_ALARM)
+        self.control_timer:Timer = Timer(wait_time=1000)
         self.actual_state:Status = Status.NORMAL
         self.window_controller:WindowManager = WindowManager()
         self.temperature_access:TemperatureAccessManager = TemperatureAccessManager(max_len=max_datapoints)
@@ -130,7 +137,7 @@ class Manager():
     def getLatest(self) -> dict:
         return {
             "status" : self.actual_state.value,                           # Actual integer value of active FSM status
-            "mode" : self.active_mode.value,                              # Actual control mode
+            "mode" : (self.window_controller.get_mode()).value,                              # Actual control mode
             "datapoint" : self.temperature_access.getDataPoint(index=-1), # Latest datapoint inserted
             "nextStatus" : 100                                            # Time to wait to send another request - MAYBE ADD LOGIC BEHIND THIS VALUE
         }
@@ -148,29 +155,50 @@ class Manager():
         last_temperature = self.temperature_access.getDataPoint(index=-1).get("temperature")
         if last_temperature < self.FIRST_THRESHOLD:
             self.actual_state = Status.NORMAL
-            self.timer.reset()
+            self.alarm_timer.reset()
         elif last_temperature >= self.FIRST_THRESHOLD and last_temperature <= self.SECOND_THRESHOLD:
             self.actual_state = Status.HOT
-            self.timer.reset()
-        elif last_temperature > self.SECOND_THRESHOLD and not self.timer.is_set():
+            self.alarm_timer.reset()
+        elif last_temperature > self.SECOND_THRESHOLD and not self.alarm_timer.is_set():
             self.actual_state = Status.TOO_HOT
-            self.timer.set()
-        elif self.timer.is_over():
+            self.alarm_timer.set()
+        elif self.alarm_timer.is_over():
             self.actual_state = Status.ALARM
-            self.timer.reset()
-        elif self.timer.is_set():
-            self.timer.update()
+            self.alarm_timer.reset()
+        elif self.alarm_timer.is_set():
+            self.alarm_timer.update()
 
     def change_state(self, state:Status):
         self.actual_state = state
 
+    def get_state(self) -> Status:
+        return self.actual_state
+
     def change_mode(self, mode:Mode):
-        self.active_mode = mode
+        self.control_timer.update() # FIXME: Volendo possiamo anche mettere un metodo update per ogni thread in cui vengono eseguite le azionidi routine
+        if (self.window_controller.check_mode(Mode.AUTOMATIC)) or (self.control_timer.is_over()):
+            self.window_controller.set_mode(mode)
+            self.control_timer.set()
+        else:
+            self.control_timer.reset()
+
+    def get_mode(self) -> Mode:
+        return self.window_controller.get_mode()
 
     def receive_temperature(self, data:float) -> None:
         self.temperature_access.enqueueDataPoint(
-            timestamp = time.time(),                        # Datapoint reception timestamp
+            timestamp = time.time(),                        # Datapoint reception timestamp (optional)
             temperature = data,                             # Received temperature
             window = self.window_controller.get_position()  # Actual Window opening percentage
         )
-        self.adjust_state()
+        self.adjust_state() #FIXME: at the moment the temperaure situation is checked everytime one new temperature is received.
+
+    def receive_opening_percentage(self, percentage:float = 0.00) -> None:
+        if self.window_controller.check_mode(Mode.LOCAL_MANUAL) or self.window_controller.check_mode(Mode.REMOTE_MANUAL):
+            self.window_controller.move(percentage)
+
+    def get_opening_percentage(self) -> float:
+        return self.window_controller.get_position()
+
+    def check_if_active(self, mode:Mode) -> bool:
+        return self.window_controller.check_mode(mode_to_check=mode)
