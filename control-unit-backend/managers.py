@@ -128,7 +128,7 @@ class Manager():
         self.SECOND_THRESHOLD:float = 35.00
         self.TIME_TO_ALARM:float = 10.00
         self.alarm_timer:Timer = Timer(wait_time=self.TIME_TO_ALARM)
-        self.control_timer:Timer = Timer(wait_time=1000)
+        self.control_timer:Timer = Timer(wait_time=60.00)
         self.actual_state:Status = Status.NORMAL
         self.window_controller:WindowManager = WindowManager()
         self.temperature_access:TemperatureAccessManager = TemperatureAccessManager(max_len=max_datapoints)
@@ -153,6 +153,8 @@ class Manager():
 
     def adjust_state(self):
         last_temperature = self.temperature_access.getDataPoint(index=-1).get("temperature")
+        if self.alarm_timer.is_set():
+            self.alarm_timer.update()
         if last_temperature < self.FIRST_THRESHOLD:
             self.actual_state = Status.NORMAL
             self.alarm_timer.reset()
@@ -165,9 +167,6 @@ class Manager():
         elif self.alarm_timer.is_over():
             self.actual_state = Status.ALARM
             self.alarm_timer.reset()
-        elif self.alarm_timer.is_set():
-            self.alarm_timer.update()
-
     def change_state(self, state:Status):
         self.actual_state = state
 
@@ -175,7 +174,6 @@ class Manager():
         return self.actual_state
 
     def change_mode(self, mode:Mode):
-        self.control_timer.update() # FIXME: Volendo possiamo anche mettere un metodo update per ogni thread in cui vengono eseguite le azionidi routine
         if (self.window_controller.check_mode(Mode.AUTOMATIC)) or (self.control_timer.is_over()):
             self.window_controller.set_mode(mode)
             self.control_timer.set()
@@ -202,3 +200,16 @@ class Manager():
 
     def check_if_active(self, mode:Mode) -> bool:
         return self.window_controller.check_mode(mode_to_check=mode)
+
+    def check_and_fix_control(self):
+        if self.control_timer.is_set():
+            self.control_timer.update()
+            if self.control_timer.is_over():
+                self.control_timer.reset()
+                self.window_controller.set_mode(Mode.AUTOMATIC)
+
+    def update(self) -> None:
+        self.check_and_fix_control()
+        if self.window_controller.check_mode(Mode.AUTOMATIC):
+            # some instruction to decide the new percentage
+            self.window_controller.move()

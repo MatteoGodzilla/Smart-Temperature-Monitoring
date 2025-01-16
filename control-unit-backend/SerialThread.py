@@ -11,11 +11,18 @@ class SerialThread(Thread):
         self.manager:Manager = system_manager
         self.daemon = True
         self.running = True
+
         self.serial_line = serial.Serial(baudrate=self.BAUDRATE, port=self.SERIALPORT)
     def run(self):
         try:
             self.serial_line.open()
             while self.running: # TODO: Probably is necessary to decide every loop if read or write on serial line
+                print("Serial Thread: Sending data...")
+                msg_percentage = "P: %8.2f" % (self.manager.get_opening_percentage())
+                self.serial_line.write(msg_percentage.encode("utf-8"))
+                if self.manager.get_mode() == Mode.LOCAL_MANUAL:
+                    msg_temperature = "T: %8.2f" % (self.manager.getLatest()["datapoint"]["temperature"])
+                    self.serial_line.write(msg_temperature.encode("utf-8"))
                 print("Serial Thread: Reading from serial line...")
                 message = self.serial_line.read_until(expected=b";").decode("utf-8")
                 try:
@@ -37,11 +44,11 @@ class SerialThread(Thread):
                             self.manager.change_mode(mode=received_mode)
                         case _:
                             print("Serial Thread: Received something unusual: ", message[2:])
-                    self.serial_line.write("P:", str(self.manager.get_opening_percentage()))
-
-                    if self.manager.get_mode() == Mode.LOCAL_MANUAL:
-                        self.serial_line.write("T:", str(self.manager.getLatest()["datapoint"]["temperature"]))
                 except IndexError:
                      print("Serial Thread: Received some bytes, nothing useful")
+            print("Serial Thread: closed")
         except (serial.SerialException, FileNotFoundError) as exception:
-                print("Serial Thread: The serial connection has encountered a critical problem, closing.")
+                print("Serial Thread: The serial connection has encountered a critical problem: ", exception)
+
+    def close(self):
+         self.running = False

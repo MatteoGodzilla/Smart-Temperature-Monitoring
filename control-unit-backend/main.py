@@ -15,7 +15,8 @@ if __name__=="__main__":
     try:
         while True:
             time.sleep(1)
-            # qui volendo si inserirebbe una chiamata di update situation ai vari thread
+            # qui volendo si inserirebbe una chiamata di update situation ai vari thread, o per il manager
+            manager.update()
     except KeyboardInterrupt:
         print("Main Thread: Shutting down")
         mqtt_comunicator.close()
