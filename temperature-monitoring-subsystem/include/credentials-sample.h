@@ -3,3 +3,5 @@
 #define MQTT_BROKER ""
 #define MQTT_PORT 1883
 #define CLIENT_NAME ""
+#define PUBLISH_TOPIC ""
+#define SUBSCRIBE_TOPIC ""

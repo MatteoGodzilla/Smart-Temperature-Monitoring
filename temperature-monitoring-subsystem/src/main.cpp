@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 #include "credentials.h"
 #include "temperature.h"
@@ -10,6 +11,8 @@
 //TEMP_SENSOR_GPIO AND TEMP_SENSOR_ADC_CHANNEL MUST REFER TO THE SAME
 #define TEMP_SENSOR_GPIO 36
 #define TEMP_SENSOR_ADC_CHANNEL ADC_CHANNEL_0
+
+#define JSON_OUTPUT_MAX_SIZE 30
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -41,6 +44,18 @@ void setup() {
     lastPush = millis();
 }
 
+void receivingCallback(const char topic[], byte* payload, unsigned int length){
+    // a message has been received, assume it's a json string
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, payload);
+
+    if(!error){
+        nextSample = doc["nextSample"];
+        Serial.print("Received message, changed nextSample to ");
+        Serial.println(nextSample);
+    }
+}
+
 void loop() {
     if(!client.connected()){
         digitalWrite(RED_LED, HIGH);
@@ -51,8 +66,12 @@ void loop() {
             Serial.println("Connection to MQTT Broker failed!");
             Serial.println(client.state());
             delay(5000);
+        } else {
+            client.setCallback(receivingCallback);
+            client.subscribe(SUBSCRIBE_TOPIC);
         }
     } else {
+        client.loop();
         digitalWrite(RED_LED, LOW);
         digitalWrite(GREEN_LED, HIGH);
 
@@ -60,9 +79,15 @@ void loop() {
 
         long now = millis();
         if(now - lastPush > nextSample){
-            double temperature = Temperature::getAverageTemperature();
             //send through mqtt
-            //Serial.println(temperature);
+            char output[JSON_OUTPUT_MAX_SIZE];
+            double temperature = Temperature::getAverageTemperature();;
+            JsonDocument doc;
+            doc["temperature"] = temperature;
+            serializeJson(doc, output, JSON_OUTPUT_MAX_SIZE);
+            client.publish(PUBLISH_TOPIC, output);
+
+            Serial.println(temperature);
             lastPush = now;
         }
 
