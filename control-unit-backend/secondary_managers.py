@@ -1,0 +1,191 @@
+from collections import deque
+from system_enums import Mode, Status
+from timers import Timer
+from threading import Condition
+
+class TemperatureAccessManager():
+    def __init__(self, max_len=5):
+        self.temperatureAVG:float = 0
+        self.temperatureSUM:float = 0
+        self.DATAPOINT_BUFFER_SIZE:int = max_len
+        self.window_condition = Condition()
+        self.write_datapoint:bool = False
+        self.read_datapoint:bool = False
+        # The internal DataPoints collection.
+        # One DataPoint represents a "screenshot" of the window situation.
+        self.datapoints:deque = deque(maxlen=self.DATAPOINT_BUFFER_SIZE)
+
+        # TEST VALUES ZONE - REMOVE ON RELEASE
+        self.enqueueDataPoint(1000.50, 34.55, 0.24)
+        self.enqueueDataPoint(2000.23, 30.45, 0.14)
+        self.enqueueDataPoint(2500.45, 38.50, 0.86)
+        self.enqueueDataPoint(4250.00, 26.76, 0.03)
+        self.enqueueDataPoint(4555.00, 28.73, 0.08)
+        self.enqueueDataPoint(4650.00, 27.72, 0.01)
+        # END TEST ZONE
+
+    # This method will be called when a new datapoint is received from ESP32 using MQTT.
+    # TODO: Manage race conditions between writer (Thread MQTT) and reader (Thread Flask).
+    def enqueueDataPoint(self, timestamp:float, temperature:float, window:float) -> None:
+        while self.read_datapoint:
+            self.window_condition.wait()
+        self.write_datapoint = True
+        # If the deque is full, then remove the oldest datapoint inserted.
+        if len(self.datapoints) == self.DATAPOINT_BUFFER_SIZE:
+            # Remove from the sum the temperature value of the removed datapoint before the pop.
+            self.temperatureSUM -= self.datapoints[0]['temperature']
+            # Removing the oldest datapoint inside the deque.
+            self.datapoints.popleft()
+        self.datapoints.append({
+            "timestamp" : timestamp,     # measurement moment expressed in seconds
+            "temperature" : temperature, # measured temperature
+            "window" : window            # window opening percentage, between [0, 1]
+        })
+        self.temperatureSUM += temperature
+        self.temperatureAVG = self.temperatureSUM / len(self.datapoints)
+        self.write_datapoint = False
+        self.window_condition.notify_all()
+
+    def getDataPoints(self) -> deque:
+        while self.write_datapoint:
+            self.window_condition.wait()
+        self.read_datapoint = True
+        datapoints = self.datapoints
+        self.read_datapoint = False
+        self.window_condition.notify_all()
+        return datapoints
+
+    def getDataPoint(self, index=0) -> dict:
+        while self.write_datapoint:
+            self.window_condition.wait()
+        self.read_datapoint = True
+        datapoint = self.datapoints[index]
+        self.read_datapoint = False
+        self.window_condition.notify_all()
+        return datapoint
+
+    def getMinTemperature(self) -> float:
+        while self.write_datapoint:
+            self.window_condition.wait()
+        self.read_datapoint = True
+        min_temperature = min(self.datapoints, key = lambda point : point['temperature'])['temperature']
+        self.read_datapoint = False
+        self.window_condition.notify_all()
+        return min_temperature
+
+    def getMaxTemperature(self) -> float:
+        while self.write_datapoint:
+            self.window_condition.wait()
+        self.read_datapoint = True
+        max_temperature = max(self.datapoints, key = lambda point : point['temperature'])['temperature']
+        self.read_datapoint = False
+        self.window_condition.notify_all()
+        return max_temperature
+
+    def getAverageTemperature(self) -> float:
+        while self.write_datapoint:
+            self.window_condition.wait()
+        self.read_datapoint = True
+        average = self.temperatureAVG
+        self.read_datapoint = False
+        self.window_condition.notify_all()
+        return average
+
+class WindowManager():
+    def __init__(self):
+        self.position:float = 0.00
+        self.active_mode = Mode.AUTOMATIC
+        self.condition = Condition()
+        self.move_window:bool = False
+        self.read_window:bool = False
+        self.mode_condition = Condition()
+        self.update_mode:bool = False
+        self.read_mode:bool = False
+
+    def move(self, position:float = 0.00) -> None:
+        while self.read_window:
+            self.condition.wait()
+        self.move_window = True
+        self.position = position
+        self.move_window = False
+        self.condition.notify_all()
+
+    def get_position(self) -> float:
+        while self.move_window:
+            self.condition.wait()
+        self.read_window = True
+        position = self.position
+        self.read_window = False
+        self.condition.notify_all()
+        return position
+
+    def set_mode(self, mode:Mode) -> None:
+        while self.read_mode:
+            self.mode_condition.wait()
+        self.update_mode = True
+        self.active_mode = mode
+        self.update_mode = False
+        self.mode_condition.notify_all()
+
+    def get_mode(self) -> Mode:
+        while self.update_mode:
+            self.mode_condition.wait()
+        self.read_mode = True
+        active = self.active_mode
+        self.read_mode = False
+        self.mode_condition.notify_all()
+        return active
+
+    def check_mode(self, mode_to_check:Mode) -> bool:
+        while self.update_mode:
+            self.mode_condition.wait()
+        self.read_mode = True
+        is_active = ( self.active_mode == mode_to_check )
+        self.read_mode = False
+        self.mode_condition.notify_all()
+        return is_active
+
+class StatusManager():
+    TIME_TO_ALARM:float = 10.00
+    FIRST_THRESHOLD:float = 27.00
+    SECOND_THRESHOLD:float = 38.00
+    THRESHOLD_RANGE:float = SECOND_THRESHOLD - FIRST_THRESHOLD
+
+    def __init__(self):
+        self.active:Status = Status.NORMAL
+        self.condition:Condition = Condition()
+        self.update_state:bool = False
+        self.read_state:bool = False
+        self.alarm_timer:Timer = Timer(wait_time=self.TIME_TO_ALARM)
+
+    def adjust(self, temperature:float | None = None) -> None:
+        if temperature is not None:
+            while self.read_state:
+                self.condition.wait()
+            self.update_state = True
+            if self.alarm_timer.is_set():
+                self.alarm_timer.update()
+            if temperature < self.FIRST_THRESHOLD:
+                self.active = Status.NORMAL
+                self.alarm_timer.reset()
+            elif temperature >= self.FIRST_THRESHOLD and temperature <= self.SECOND_THRESHOLD:
+                self.active = Status.HOT
+                self.alarm_timer.reset()
+            elif temperature > self.SECOND_THRESHOLD and not self.alarm_timer.is_set():
+                self.active = Status.TOO_HOT
+                self.alarm_timer.set()
+            elif self.alarm_timer.is_over():
+                self.active = Status.ALARM
+                self.alarm_timer.reset()
+            self.update_state = False
+            self.condition.notify_all()
+
+    def get_active(self) -> Status:
+        while self.update_state:
+            self.condition.wait()
+        self.read_state = True
+        state = self.active
+        self.read_state = False
+        self.condition.notify_all()
+        return state
+
