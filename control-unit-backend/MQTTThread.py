@@ -14,8 +14,8 @@ class MQTTThread(Thread):
         self.client.on_disconnect = self.destroy_connection
         self.client.on_message = self.receive_message
         self.client.on_subscribe = self.topic_subscribe
-        self.client.on_publish = self.publish
-        self.daemon = True
+        self.client.on_publish = self.publish_on_topic
+        #self.daemon = True
         self.running = True
         self.manager = system_manager
 
@@ -23,7 +23,8 @@ class MQTTThread(Thread):
         print("MQTT Thread: Connection closed with code %d." % (rc))
 
     def establish_connection(self, client, userdata, flags, rc):
-        print("MQTT Thread: Received CONNACK with code %d." % (rc))
+        print("MQTT Thread: Successfully connected, received CONNACK with code %d." % (rc))
+        self.client.subscribe(topic=self.TOPIC)
 
     def receive_message(self, client, userdata, message:mqtt.MQTTMessage):
         fixed_payload = json.loads(str(message.payload))
@@ -38,7 +39,7 @@ class MQTTThread(Thread):
     def topic_subscribe(self, client, userdata, mid, granted_qos):
         print("MQTT Thread: Successfully subscribed on topic.")
 
-    def publish(self, client, userdata, mid, reason_code):
+    def publish_on_topic(self, client, userdata, mid, reason_code):
         print("MQTT Thread: Publishing message with frequency.")
 
 

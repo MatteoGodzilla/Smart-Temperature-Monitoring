@@ -9,10 +9,15 @@ class SerialThread(Thread):
     def __init__(self, system_manager:Manager):
         super(SerialThread, self).__init__()
         self.manager:Manager = system_manager
-        self.daemon = True
+        #self.daemon = True
         self.running = True
+        try:
+            self.serial_line = serial.Serial(baudrate=self.BAUDRATE, port=self.SERIALPORT)
+        except serial.SerialException:
+             self.serial_line = serial.Serial()
+             self.serial_line.port = self.SERIALPORT
+             self.serial_line.baudrate = self.BAUDRATE
 
-        self.serial_line = serial.Serial(baudrate=self.BAUDRATE, port=self.SERIALPORT)
     def run(self):
         try:
             self.serial_line.open()
@@ -46,9 +51,9 @@ class SerialThread(Thread):
                             print("Serial Thread: Received something unusual: ", message[2:])
                 except IndexError:
                      print("Serial Thread: Received some bytes, nothing useful")
-            print("Serial Thread: closed")
-        except (serial.SerialException, FileNotFoundError) as exception:
-                print("Serial Thread: The serial connection has encountered a critical problem: ", exception)
+            print("Serial Thread: Closed")
+        except (Exception, serial.SerialException, FileNotFoundError) as exception:
+                print("Serial Thread: The serial connection has encountered a critical problem.\n", exception)
 
     def close(self):
          self.running = False

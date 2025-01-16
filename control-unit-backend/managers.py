@@ -14,26 +14,23 @@ TODO:
     -> FINISH IMPLEMENTATION OF THE MANAGERS.
 '''
 class Manager():
-    def __init__(self, max_datapoints=5):
-        # Constants
-        self.TIME_FREQUENCY:int = 1000
-        self.FIRST_FREQUENCY:int = 4
-        self.SECOND_FREQUENCY:int = 8
+    # Constants
+    TIME_FREQUENCY:int = 1000
+    FIRST_FREQUENCY:int = 4
+    SECOND_FREQUENCY:int = 8
 
-        self.MAX_CONTROL_TIME:float = 60.00
-
+    MAX_CONTROL_TIME:float = 60.00
+    def __init__(self, max_datapoints:int=5):
         # Variables
-        self.alarm_timer:Timer = Timer(wait_time=self.TIME_TO_ALARM)
+        self.temperature_access:TemperatureAccessManager = TemperatureAccessManager(max_len=max_datapoints)
         self.control_timer:Timer = Timer(wait_time=self.MAX_CONTROL_TIME)
-        self.actual_state:Status = Status.NORMAL
         self.window_controller:WindowManager = WindowManager()
         self.state_manager:StatusManager = StatusManager()
-        self.temperature_access:TemperatureAccessManager = TemperatureAccessManager(max_len=max_datapoints)
 
     # Writer (Thread MQTT) | Reader (Thread Flask).
     def get_latest(self) -> dict:
         return {
-            "status" : self.actual_state.value,                           # Actual integer value of active FSM status
+            "status" : (self.state_manager.get_active()).value,           # Actual integer value of active FSM status
             "mode" : (self.window_controller.get_mode()).value,           # Actual control mode
             "datapoint" : self.temperature_access.getDataPoint(index=-1), # Latest datapoint inserted
             "nextStatus" : 100                                            # Time to wait to send another request - MAYBE ADD LOGIC BEHIND THIS VALUE
@@ -48,13 +45,13 @@ class Manager():
             "average" : self.temperature_access.getAverageTemperature()   # Average temperature between all temperature values in memory
         }
 
-    def change_state(self, state:Status):
-        self.actual_state = state
+    def change_state(self, state:Status) -> None:
+        self.state_manager.set_state(state)
 
     def get_state(self) -> Status:
-        return self.actual_state
+        return self.state_manager.get_active()
 
-    def change_mode(self, mode:Mode):
+    def change_mode(self, mode:Mode) -> None:
         if (self.window_controller.check_mode(Mode.AUTOMATIC)) or (self.control_timer.is_over()):
             self.window_controller.set_mode(mode)
             self.control_timer.set()
@@ -99,7 +96,7 @@ class Manager():
     def update(self) -> None:
         self.check_and_fix_control()
         if self.window_controller.check_mode(Mode.AUTOMATIC):
-            match self.actual_state.value:
+            match self.state_manager.get_active().value:
                 case Status.NORMAL.value:
                     self.window_controller.move(0.00)
                 case Status.HOT.value:
