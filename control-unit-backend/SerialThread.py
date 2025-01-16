@@ -29,7 +29,7 @@ class SerialThread(Thread):
                     msg_temperature = "T: %8.2f" % (self.manager.get_latest()["datapoint"]["temperature"])
                     self.serial_line.write(msg_temperature.encode("utf-8"))
                 print("Serial Thread: Reading from serial line...")
-                message = self.serial_line.read_until(expected=b";").decode("utf-8")
+                message = self.serial_line.read_until(expected=b";").decode("utf-8") # TODO: check if the serial read need to sanitize the readed bytes
                 try:
                     match message[0:2]:
                         case "P:":
