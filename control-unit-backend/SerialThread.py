@@ -26,7 +26,7 @@ class SerialThread(Thread):
                 msg_percentage = "P: %8.2f" % (self.manager.get_opening_percentage())
                 self.serial_line.write(msg_percentage.encode("utf-8"))
                 if self.manager.get_mode() == Mode.LOCAL_MANUAL:
-                    msg_temperature = "T: %8.2f" % (self.manager.getLatest()["datapoint"]["temperature"])
+                    msg_temperature = "T: %8.2f" % (self.manager.get_latest()["datapoint"]["temperature"])
                     self.serial_line.write(msg_temperature.encode("utf-8"))
                 print("Serial Thread: Reading from serial line...")
                 message = self.serial_line.read_until(expected=b";").decode("utf-8")
@@ -53,7 +53,7 @@ class SerialThread(Thread):
                      print("Serial Thread: Received some bytes, nothing useful")
             print("Serial Thread: Closed")
         except (Exception, serial.SerialException, FileNotFoundError) as exception:
-                print("Serial Thread: The serial connection has encountered a critical problem.\n", exception)
+                print("Critical problem encountered on Serial Thread: ", exception)
 
     def close(self):
          self.running = False
