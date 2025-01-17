@@ -30,13 +30,14 @@ class Manager():
     # Writer (Thread MQTT) | Reader (Thread Flask).
     def get_latest(self) -> dict:
         return {
-            "status" : (self.state_manager.get_active()).value,           # Actual integer value of active FSM status
-            "mode" : (self.window_controller.get_mode()).value,           # Actual control mode
-            "datapoint" : self.temperature_access.getDataPoint(index=-1), # Latest datapoint inserted
-            "maximum" : self.temperature_access.getMaxTemperature(),      # Maximum temperature in memory
-            "minimum" : self.temperature_access.getMinTemperature(),      # Minimum temperature in memory
-            "average" : self.temperature_access.getAverageTemperature(),  # Average temperature between all temperature values in memory
-            "nextStatus" : 100                                            # Time to wait to send another request - MAYBE ADD LOGIC BEHIND THIS VALUE
+            "status" : (self.state_manager.get_active()).value,             # Actual integer value of active FSM status
+            "mode" : (self.window_controller.get_mode()).value,             # Actual control mode
+            "datapoint" : self.temperature_access.getDataPoint(index=-1),   # Latest datapoint inserted
+            "maximum" : self.temperature_access.getMaxTemperature(),        # Maximum temperature in memory
+            "minimum" : self.temperature_access.getMinTemperature(),        # Minimum temperature in memory
+            "average" : self.temperature_access.getAverageTemperature(),    # Average temperature between all temperature values in memory
+            "nextStatus" : 100,                                             # Time to wait to send another request - MAYBE ADD LOGIC BEHIND THIS VALUE
+            "maxDatapoints" : self.temperature_access.DATAPOINT_BUFFER_SIZE # Number of maximum datapoints collected in memory
         }
 
     # Writer (Thread MQTT) | Reader (Thread Flask).
@@ -63,6 +64,8 @@ class Manager():
             self.window_controller.set_mode(mode)
             self.control_timer.set()
 
+    def alarm_fix(self) -> None:
+        self.state_manager.fix_alarm()
 
     def get_mode(self) -> Mode:
         return self.window_controller.get_mode()

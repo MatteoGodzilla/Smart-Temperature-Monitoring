@@ -31,8 +31,8 @@ class MQTTThread(Thread):
         fixed_payload:dict = json.loads((message.payload).decode("utf-8"))
         try:
             print("MQTT Thread - Received new message: ", fixed_payload,
-                "\nOn topic:", message.topic,
-                "\nWith QoS:", str(message.qos))
+                " on topic:", message.topic,
+                " with QoS:", str(message.qos))
             print("MQTT Thread: Sending next sample message on topic.")
             self.manager.receive_temperature(fixed_payload["temperature"])
             self.client.publish(self.FREQUENCY_TOPIC, self.manager.get_mqtt_frequency_packed())

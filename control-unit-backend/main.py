@@ -5,7 +5,7 @@ from MQTTThread import *
 import time
 
 if __name__=="__main__":
-    manager:Manager = Manager(max_datapoints=200)
+    manager:Manager = Manager(max_datapoints=20)
     flask_server = FlaskThread(system_manager=manager)
     serial_connection = SerialThread(system_manager=manager)
     mqtt_comunicator = MQTTThread(system_manager=manager)
@@ -19,6 +19,6 @@ if __name__=="__main__":
     except (KeyboardInterrupt, Exception):
         print("Main Thread: Shutting down")
         flask_server.close()
-        mqtt_comunicator.close()
-        serial_connection.close()
+        #mqtt_comunicator.close()
+        #serial_connection.close()
         exit(0)

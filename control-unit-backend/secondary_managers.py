@@ -15,15 +15,6 @@ class TemperatureAccessManager():
         # One DataPoint represents a "screenshot" of the window situation.
         self.datapoints:deque = deque(maxlen=self.DATAPOINT_BUFFER_SIZE)
 
-        # TEST VALUES ZONE - REMOVE ON RELEASE
-        self.enqueueDataPoint(1000.50, 34.55, 0.24)
-        self.enqueueDataPoint(2000.23, 30.45, 0.14)
-        self.enqueueDataPoint(2500.45, 38.50, 0.86)
-        self.enqueueDataPoint(4250.00, 26.76, 0.03)
-        self.enqueueDataPoint(4555.00, 28.73, 0.08)
-        self.enqueueDataPoint(4650.00, 27.72, 0.01)
-        # END TEST ZONE
-
     # This method will be called when a new datapoint is received from ESP32 using MQTT.
     # TODO: Manage race conditions between writer (Thread MQTT) and reader (Thread Flask).
     def enqueueDataPoint(self, timestamp:float, temperature:float, window:float) -> None:
@@ -32,7 +23,7 @@ class TemperatureAccessManager():
                 self.datapoint_condition.wait()
             self.write_datapoint = True
             # If the deque is full, then remove the oldest datapoint inserted.
-            if len(self.datapoints) == self.DATAPOINT_BUFFER_SIZE:
+            if len(self.datapoints) >= self.DATAPOINT_BUFFER_SIZE:
                 # Remove from the sum the temperature value of the removed datapoint before the pop.
                 self.temperatureSUM -= self.datapoints[0]['temperature']
                 # Removing the oldest datapoint inside the deque.
@@ -52,7 +43,10 @@ class TemperatureAccessManager():
             while self.write_datapoint:
                 self.datapoint_condition.wait()
             self.read_datapoint = True
-            datapoints = self.datapoints
+            if len(self.datapoints) > 0:
+                datapoints = self.datapoints
+            else:
+                datapoints = [{"timestamp" : 0.00, "temperature" : 0.00, "window" : 0.00}]
             self.read_datapoint = False
             self.datapoint_condition.notify_all()
         return datapoints
@@ -62,7 +56,10 @@ class TemperatureAccessManager():
             while self.write_datapoint:
                 self.datapoint_condition.wait()
             self.read_datapoint = True
-            datapoint = self.datapoints[index]
+            if len(self.datapoints) > 0:
+                datapoint = self.datapoints[index]
+            else:
+                datapoint = {"timestamp" : 0.00, "temperature" : 0.00, "window" : 0.00}
             self.read_datapoint = False
             self.datapoint_condition.notify_all()
         return datapoint
@@ -72,7 +69,10 @@ class TemperatureAccessManager():
             while self.write_datapoint:
                 self.datapoint_condition.wait()
             self.read_datapoint = True
-            min_temperature = min(self.datapoints, key = lambda point : point['temperature'])['temperature']
+            if len(self.datapoints) > 0:
+                min_temperature = min(self.datapoints, key = lambda point : point['temperature'])['temperature']
+            else:
+                min_temperature = 0.00
             self.read_datapoint = False
             self.datapoint_condition.notify_all()
         return min_temperature
@@ -82,7 +82,10 @@ class TemperatureAccessManager():
             while self.write_datapoint:
                 self.datapoint_condition.wait()
             self.read_datapoint = True
-            max_temperature = max(self.datapoints, key = lambda point : point['temperature'])['temperature']
+            if len(self.datapoints) > 0:
+                max_temperature = max(self.datapoints, key = lambda point : point['temperature'])['temperature']
+            else:
+                max_temperature = 0.00
             self.read_datapoint = False
             self.datapoint_condition.notify_all()
         return max_temperature
@@ -158,7 +161,7 @@ class WindowManager():
         return is_active
 
 class StatusManager():
-    TIME_TO_ALARM:float = 10.00
+    TIME_TO_ALARM:float = 2.00
     FIRST_THRESHOLD:float = 27.00
     SECOND_THRESHOLD:float = 38.00
     THRESHOLD_RANGE:float = SECOND_THRESHOLD - FIRST_THRESHOLD
@@ -176,22 +179,25 @@ class StatusManager():
                 while self.read_state or self.update_state:
                     self.condition.wait()
                 self.update_state = True
-                if self.alarm_timer.is_set():
-                    self.alarm_timer.update()
-                if temperature < self.FIRST_THRESHOLD:
-                    self.active = Status.NORMAL
-                    self.alarm_timer.reset()
-                elif temperature >= self.FIRST_THRESHOLD and temperature <= self.SECOND_THRESHOLD:
-                    self.active = Status.HOT
-                    self.alarm_timer.reset()
-                elif temperature > self.SECOND_THRESHOLD and not self.alarm_timer.is_set():
-                    self.active = Status.TOO_HOT
-                    self.alarm_timer.set()
-                elif self.alarm_timer.is_over():
-                    self.active = Status.ALARM
-                    self.alarm_timer.reset()
+                if self.active != Status.ALARM or not self.alarm_timer.is_set():
+                    if self.alarm_timer.is_set():
+                        self.alarm_timer.update()
+                    if temperature < self.FIRST_THRESHOLD:
+                        self.active = Status.NORMAL
+                        self.alarm_timer.reset()
+                    elif temperature >= self.FIRST_THRESHOLD and temperature <= self.SECOND_THRESHOLD:
+                        self.active = Status.HOT
+                        self.alarm_timer.reset()
+                    elif temperature > self.SECOND_THRESHOLD and not self.alarm_timer.is_set():
+                        self.active = Status.TOO_HOT
+                        self.alarm_timer.set()
+                    elif self.alarm_timer.is_over():
+                        self.active = Status.ALARM
                 self.update_state = False
                 self.condition.notify_all()
+
+    def fix_alarm(self) -> None:
+        self.alarm_timer.reset()
 
     def get_active(self) -> Status:
         with self.condition:

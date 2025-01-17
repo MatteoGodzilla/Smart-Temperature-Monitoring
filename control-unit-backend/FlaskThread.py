@@ -20,6 +20,7 @@ class FlaskThread(Thread):
         self.flask_app.add_url_rule(rule="/api/isFree", view_func=self.can_take_control)
         self.flask_app.add_url_rule(rule="/api/takeControl", view_func=self.take_control)
         self.flask_app.add_url_rule(rule="/api/control", view_func=self.control_action)
+        self.flask_app.add_url_rule(rule="/api/fixAlarm", view_func=self.manage_alarm)
         self.flask_app.add_url_rule(rule="/api/releaseControl", view_func=self.release_control)
         self.control_timer:Timer = Timer(wait_time=100)
         self.SERVER_IP:str = '0.0.0.0'
@@ -44,16 +45,23 @@ class FlaskThread(Thread):
         print("Flask Thread: Received window control status request.")
         return self.generate_cors_response(data={"free": self.manager.check_if_active(Mode.AUTOMATIC)})
 
-    def control_action(self):
+    def control_action(self) -> Response:
         print("Flask Thread - Control command received: ", request.args)
         return self.generate_cors_response(data=True) #TODO: Maybe change later
+
+    def manage_alarm(self) -> Response:
+        print("Flask Thread - Fixing alarm.")
+        self.manager.alarm_fix()
+        return self.generate_cors_response()
 
     def take_control(self) -> Response:
         if self.manager.check_if_active(Mode.AUTOMATIC):
             print("Flask Thread: Enabled remote control")
             self.manager.change_mode(Mode.REMOTE_MANUAL)
-        print("Flask Thread: Request to remote control rejected.")
-        return self.can_take_control()
+            return self.generate_cors_response(data=True)
+        else:
+            print("Flask Thread: Request to remote control rejected.")
+            return self.generate_cors_response(data=False)
 
     def release_control(self) -> Response:
         print("Flask Thread: Received release remote control request.")

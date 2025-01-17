@@ -52,16 +52,13 @@ class SerialThread(Thread):
 
                 if self.manager.get_mode().value == Mode.LOCAL_MANUAL.value:
                     msg_temperature = "T:%.2f;" % float(self.manager.get_latest()["datapoint"]["temperature"])
-                    print("Serial Thread - Sending TEMPERATURE: ", msg_temperature)
                     self.serial_line.write(msg_temperature.encode("utf-8").strip())
                     self.serial_line.flush()
                 else:
                     msg_percentage = "P:%.2f;" % float(self.manager.get_opening_percentage())
-                    print("Serial Thread - Sending PERCENTAGE: ", msg_percentage.strip())
                     self.serial_line.write(msg_percentage.encode("utf-8").strip())
                     self.serial_line.flush()
-
-                print("Serial Thread - Sending CONTROL MODE:", (self.manager.get_mode()).value)
+                print("Serial Thread - Sending data")
                 msg_mode = "S:" + str((self.manager.get_mode()).value) + ";"
                 self.serial_line.write(msg_mode.encode("utf-8").strip())
                 self.serial_line.flush()
