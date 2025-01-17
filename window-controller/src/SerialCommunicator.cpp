@@ -58,6 +58,8 @@ void SerialCommunicator::execute(){
                 int stateNumber = stateValue.toInt();
                 if(stateNumber != 1) {
                     fsm->state = AUTOMATIC;
+                    Serial.print(";");
+                    Serial.flush();
                 } else {
                     fsm->state = MANUAL;
                 }

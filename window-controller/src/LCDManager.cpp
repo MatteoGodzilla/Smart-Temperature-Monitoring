@@ -46,7 +46,7 @@ void LCDManager::execute(){
                 lcd.printstr("MANUAL");
                 lcd.setCursor(0,2);
                 lcd.printstr("TEMP: ");
-                //lcd.print(temp);
+                lcd.print(temp);
                 lcd.printstr(" C");
                 break;
             default:
