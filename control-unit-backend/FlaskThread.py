@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, Response, request
 from threading import Thread
 from managers import *
-from werkzeug.serving import make_server
+from werkzeug.serving import BaseWSGIServer, make_server
 import logging
 
 class FlaskThread(Thread):
@@ -21,8 +21,7 @@ class FlaskThread(Thread):
         self.control_timer:Timer = Timer(wait_time=100)
         self.SERVER_IP:str = '0.0.0.0'
         self.SERVER_PORT:int = 80
-        #self.daemon:bool = True
-        self.server = make_server(host=self.SERVER_IP, port=self.SERVER_PORT, app=self.flask_app)
+        self.server:BaseWSGIServer = make_server(host=self.SERVER_IP, port=self.SERVER_PORT, app=self.flask_app)
 
     def generate_cors_response(self, data="") -> Response:
         response = jsonify(message=data)

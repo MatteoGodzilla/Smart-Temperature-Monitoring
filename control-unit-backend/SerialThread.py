@@ -9,7 +9,6 @@ class SerialThread(Thread):
     def __init__(self, system_manager:Manager):
         super(SerialThread, self).__init__()
         self.manager:Manager = system_manager
-        #self.daemon = True
         self.running = True
         try:
             self.serial_line = serial.Serial(baudrate=self.BAUDRATE, port=self.SERIALPORT)

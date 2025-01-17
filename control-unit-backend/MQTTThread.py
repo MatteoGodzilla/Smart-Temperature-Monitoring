@@ -16,15 +16,14 @@ class MQTTThread(Thread):
         self.client.on_message = self.receive_message
         self.client.on_subscribe = self.topic_subscribe
         self.client.on_publish = self.publish_on_topic
-        #self.daemon = True
         self.running = True
         self.manager = system_manager
 
     def destroy_connection(self, userdata, flags, rc):
-        print("MQTT Thread: Connection closed with code %d." % (rc))
+        print("MQTT Thread - Connection closed with code %d." % (rc))
 
     def establish_connection(self, client, userdata, flags, rc):
-        print("MQTT Thread: Successfully connected, received CONNACK with code %d." % (rc))
+        print("MQTT Thread - Successfully connected, received CONNACK with code %d." % (rc))
         self.client.subscribe(topic=self.TEMPERATURE_TOPIC)
 
     def receive_message(self, client, userdata, message:mqtt.MQTTMessage):
@@ -33,17 +32,17 @@ class MQTTThread(Thread):
             print("MQTT Thread - Received new message: ", fixed_payload,
                 " on topic:", message.topic,
                 " with QoS:", str(message.qos))
-            print("MQTT Thread: Sending next sample message on topic.")
+            print("MQTT Thread - Sending next sample message on topic.")
             self.manager.receive_temperature(fixed_payload["temperature"])
             self.client.publish(self.FREQUENCY_TOPIC, self.manager.get_mqtt_frequency_packed())
         except KeyError:
-            print("MQTT Thread: Ignored received message.")
+            print("MQTT Thread - Ignored received message.")
 
     def topic_subscribe(self, client, userdata, mid, granted_qos):
-        print("MQTT Thread: Successfully subscribed on topic.")
+        print("MQTT Thread - Successfully subscribed on topic.")
 
     def publish_on_topic(self, client, userdata, mid):
-        print("MQTT Thread: Publishing message with frequency.")
+        print("MQTT Thread - Publishing message with frequency.")
 
 
     def run(self):
