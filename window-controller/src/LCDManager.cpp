@@ -45,7 +45,7 @@ void LCDManager::execute(){
                 lcd.setCursor(0,1);
                 lcd.printstr("MANUAL");
                 lcd.setCursor(0,2);
-                lcd.printstr("TEMPERATURE: ");
+                lcd.printstr("TEMP: ");
                 //lcd.print(temp);
                 lcd.printstr(" C");
                 break;

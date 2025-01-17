@@ -17,7 +17,7 @@ class SerialCommunicator : public Task{
         void bindLCD(LCDManager* lcdTask);
         void bindFSM(FiniteStateMachine* fsmTask);
         void bindWindow(Window* windowTask);
-        void sendState(String state);
+        void sendState(int desiredState);
         void sendOpeningWindow(float val);
         virtual void execute() override;
 };

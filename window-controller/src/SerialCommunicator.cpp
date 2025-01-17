@@ -20,9 +20,9 @@ void SerialCommunicator::bindWindow(Window* windowTask){
 }
 
 //Method to send the state of the FSM to control unit
-void SerialCommunicator::sendState(String state){
+void SerialCommunicator::sendState(int desiredState){
     Serial.print("S:");
-    Serial.print(state);
+    Serial.print(desiredState);
     Serial.println(";");
     Serial.flush();
 }
@@ -55,9 +55,10 @@ void SerialCommunicator::execute(){
             //S indicates the change of status of the FSM
             else if(c.equals("S:")) {
                 String stateValue = input.substring(2);
-                if(stateValue.equals("AUTOMATIC")) {
+                int stateNumber = stateValue.toInt();
+                if(stateNumber != 1) {
                     fsm->state = AUTOMATIC;
-                } else if(stateValue.equals("MANUAL")) {
+                } else {
                     fsm->state = MANUAL;
                 }
             }
