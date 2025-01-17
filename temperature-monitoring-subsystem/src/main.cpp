@@ -47,6 +47,7 @@ void setup() {
 void receivingCallback(const char topic[], byte* payload, unsigned int length){
     // a message has been received, assume it's a json string
     JsonDocument doc;
+
     DeserializationError error = deserializeJson(doc, payload);
 
     if(!error){
@@ -85,9 +86,9 @@ void loop() {
             JsonDocument doc;
             doc["temperature"] = temperature;
             serializeJson(doc, output, JSON_OUTPUT_MAX_SIZE);
+            Serial.println(output);
             client.publish(PUBLISH_TOPIC, output);
 
-            Serial.println(temperature);
             lastPush = now;
         }
 
