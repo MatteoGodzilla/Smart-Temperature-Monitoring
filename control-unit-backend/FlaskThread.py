@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, Response
+from flask import Flask, jsonify, Response, request
 from threading import Thread
 from managers import *
 from werkzeug.serving import make_server
@@ -15,11 +15,12 @@ class FlaskThread(Thread):
         # Disable flask logger
         logging.getLogger("werkzeug").disabled = True
         self.manager:Manager = system_manager
-        self.flask_app.add_url_rule(rule="/status", endpoint="status", view_func=self.send_temperature)
-        self.flask_app.add_url_rule(rule="/history", endpoint="history", view_func=self.send_all_data)
-        self.flask_app.add_url_rule(rule="/isFree", endpoint="isFree", view_func=self.can_take_control)
-        self.flask_app.add_url_rule(rule="/takeControl", endpoint="takeControl", view_func=self.take_control)
-        self.flask_app.add_url_rule(rule="/releaseControl", endpoint="releaseControl", view_func=self.release_control)
+        self.flask_app.add_url_rule(rule="/api/status", view_func=self.send_temperature)
+        self.flask_app.add_url_rule(rule="/api/history", view_func=self.send_all_data)
+        self.flask_app.add_url_rule(rule="/api/isFree", view_func=self.can_take_control)
+        self.flask_app.add_url_rule(rule="/api/takeControl", view_func=self.take_control)
+        self.flask_app.add_url_rule(rule="/api/control", view_func=self.control_action)
+        self.flask_app.add_url_rule(rule="/api/releaseControl", view_func=self.release_control)
         self.control_timer:Timer = Timer(wait_time=100)
         self.SERVER_IP:str = '0.0.0.0'
         self.SERVER_PORT:int = 80
@@ -42,6 +43,10 @@ class FlaskThread(Thread):
     def can_take_control(self) -> Response:
         print("Flask Thread: Received window control status request.")
         return self.generate_cors_response(data={"free": self.manager.check_if_active(Mode.AUTOMATIC)})
+
+    def control_action(self):
+        print("Flask Thread - Control command received: ", request.args)
+        return self.generate_cors_response(data=True) #TODO: Maybe change later
 
     def take_control(self) -> Response:
         if self.manager.check_if_active(Mode.AUTOMATIC):

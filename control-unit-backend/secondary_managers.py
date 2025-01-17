@@ -152,7 +152,7 @@ class WindowManager():
             while self.update_mode:
                 self.mode_condition.wait()
             self.read_mode = True
-            is_active = ( self.active_mode == mode_to_check )
+            is_active = ( self.active_mode.value == mode_to_check.value )
             self.read_mode = False
             self.mode_condition.notify_all()
         return is_active

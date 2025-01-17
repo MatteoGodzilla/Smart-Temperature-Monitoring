@@ -33,6 +33,9 @@ class Manager():
             "status" : (self.state_manager.get_active()).value,           # Actual integer value of active FSM status
             "mode" : (self.window_controller.get_mode()).value,           # Actual control mode
             "datapoint" : self.temperature_access.getDataPoint(index=-1), # Latest datapoint inserted
+            "maximum" : self.temperature_access.getMaxTemperature(),      # Maximum temperature in memory
+            "minimum" : self.temperature_access.getMinTemperature(),      # Minimum temperature in memory
+            "average" : self.temperature_access.getAverageTemperature(),  # Average temperature between all temperature values in memory
             "nextStatus" : 100                                            # Time to wait to send another request - MAYBE ADD LOGIC BEHIND THIS VALUE
         }
 
@@ -52,11 +55,14 @@ class Manager():
         return self.state_manager.get_active()
 
     def change_mode(self, mode:Mode) -> None:
-        if (self.window_controller.check_mode(Mode.AUTOMATIC)) or (self.control_timer.is_over()):
+        print(mode)
+        if mode.value == Mode.AUTOMATIC.value:
+            self.window_controller.set_mode(mode)
+            self.control_timer.reset()
+        elif (self.window_controller.check_mode(Mode.AUTOMATIC)) or (self.control_timer.is_over()):
             self.window_controller.set_mode(mode)
             self.control_timer.set()
-        else:
-            self.control_timer.reset()
+
 
     def get_mode(self) -> Mode:
         return self.window_controller.get_mode()
@@ -101,9 +107,9 @@ class Manager():
                     self.window_controller.move(0.00)
                 case Status.HOT.value:
                     last_temperature = self.temperature_access.getDataPoint(index=-1)["temperature"]
-                    if last_temperature != self.FIRST_THRESHOLD:
-                        delay_from_min = last_temperature - self.FIRST_THRESHOLD
-                        new_percentage = delay_from_min / self.THRESHOLD_RANGE
+                    if last_temperature != self.state_manager.FIRST_THRESHOLD:
+                        delay_from_min = last_temperature - self.state_manager.FIRST_THRESHOLD
+                        new_percentage = delay_from_min / self.state_manager.THRESHOLD_RANGE
                         self.window_controller.move(new_percentage)
                     else:
                         self.window_controller.move(0.01)
