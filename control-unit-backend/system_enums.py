@@ -2,8 +2,8 @@ from enum import Enum
 '''
 This enum represents the control mode of the window:
 -> AUTOMATIC: The control-unit decide the window opening percentage.
--> REMOTE_MANUAL: The dashboard operator controls the window.
 -> LOCAL_MANUAL: The in-site operator controls the window.
+-> REMOTE_MANUAL: The dashboard operator controls the window.
 '''
 class Mode(Enum):
     AUTOMATIC = 0

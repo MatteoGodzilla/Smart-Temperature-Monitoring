@@ -16,8 +16,8 @@ TODO:
 class Manager():
     # Constants
     TIME_FREQUENCY:int = 1000
-    FIRST_FREQUENCY:int = 4
-    SECOND_FREQUENCY:int = 8
+    FIRST_FREQUENCY:int = 1
+    SECOND_FREQUENCY:int = 5
 
     MAX_CONTROL_TIME:float = 60.00
     def __init__(self, max_datapoints:int=5):
@@ -67,7 +67,7 @@ class Manager():
             temperature = data,                             # Received temperature
             window = self.window_controller.get_position()  # Actual Window opening percentage
         )
-        self.state_manager.adjust(self.temperature_access.getDataPoint(index=-1))
+        self.state_manager.adjust(self.temperature_access.getDataPoint(index=-1)["temperature"])
 
     def receive_opening_percentage(self, percentage:float = 0.00) -> None:
         if self.window_controller.check_mode(Mode.LOCAL_MANUAL) or self.window_controller.check_mode(Mode.REMOTE_MANUAL):
