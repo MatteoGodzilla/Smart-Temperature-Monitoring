@@ -4,10 +4,6 @@ from managers import *
 from werkzeug.serving import make_server
 import logging
 
-'''
-THINKING ABOUT USE DIRECTLY WERKZEUG SERVER INSTEAD OF FLASK, TO HAVE COMPLETE CONTROL ON SERVER BEHAVIOR.
-FOR NOW ALL THE COMUNICATION COMPONENTS ARE IMPLEMENTED AS DEAMONS BUT IN FUTURE MAY BE CONVERTED TO NORMAL THREADS.
-'''
 class FlaskThread(Thread):
     def __init__(self, system_manager:Manager):
         super(FlaskThread, self).__init__()
@@ -34,15 +30,15 @@ class FlaskThread(Thread):
         return response
 
     def send_temperature(self) -> Response:
-        print("Flask Thread: Sending latest datapoint...")
+        print("Flask Thread - Sending latest datapoint...")
         return self.generate_cors_response(data=self.manager.get_latest())
 
     def send_all_data(self) -> Response :
-        print("Flask Thread: Sending datapoint history...")
+        print("Flask Thread - Sending datapoint history...")
         return self.generate_cors_response(data=self.manager.generate_history())
 
     def can_take_control(self) -> Response:
-        print("Flask Thread: Received window control status request.")
+        print("Flask Thread - Received window control status request.")
         return self.generate_cors_response(data={"free": self.manager.check_if_active(Mode.AUTOMATIC)})
 
     def control_action(self) -> Response:
@@ -56,15 +52,15 @@ class FlaskThread(Thread):
 
     def take_control(self) -> Response:
         if self.manager.check_if_active(Mode.AUTOMATIC):
-            print("Flask Thread: Enabled remote control")
+            print("Flask Thread - Enabled remote control")
             self.manager.change_mode(Mode.REMOTE_MANUAL)
             return self.generate_cors_response(data=True)
         else:
-            print("Flask Thread: Request to remote control rejected.")
+            print("Flask Thread - Request to remote control rejected.")
             return self.generate_cors_response(data=False)
 
     def release_control(self) -> Response:
-        print("Flask Thread: Received release remote control request.")
+        print("Flask Thread - Received release remote control request.")
         if not ( self.manager.check_if_active(Mode.AUTOMATIC) or self.manager.check_if_active(Mode.LOCAL_MANUAL) ):
             self.manager.change_mode(Mode.AUTOMATIC)
             return self.generate_cors_response(data=True) #TODO: Maybe change later
@@ -72,9 +68,9 @@ class FlaskThread(Thread):
 
 
     def run(self):
-        print("Flask Thread: Running...")
+        print("Flask Thread - Running...")
         self.server.serve_forever()
 
     def close(self):
-        print("Flask Thread: Shutting down server...")
+        print("Flask Thread - Shutting down server...")
         self.server.shutdown()

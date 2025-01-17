@@ -48,7 +48,7 @@ class SerialThread(Thread):
                             case _:
                                 print("Serial Thread - Received something unusual: ", message)
                     except IndexError:
-                        print("Serial Thread - Received some bytes, nothing useful")
+                        print("Serial Thread - Received some extra bytes.")
 
                 if self.manager.get_mode().value == Mode.LOCAL_MANUAL.value:
                     msg_temperature = "T:%.2f;" % float(self.manager.get_latest()["datapoint"]["temperature"])
