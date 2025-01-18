@@ -41,7 +41,6 @@ void Window::execute(){
             */
             if(digitalRead(BTN) == HIGH) {
                 if(!stateChanged) {
-                    //fsm->state = MANUAL;
                     sc->sendState(1); //Desired state MANUAL
                 }
                 stateChanged = true;
@@ -68,7 +67,6 @@ void Window::execute(){
             */
             if(digitalRead(BTN) == HIGH) {
                 if(!stateChanged) {
-                    //fsm->state = AUTOMATIC;
                     sc->sendState(0); //Desired state AUTOMATIC
                 }
                 stateChanged = true;
