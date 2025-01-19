@@ -8,7 +8,7 @@ Route di controllo manuale remoto
   - scopo: richiesta effettiva di presa controllo dalla dashboard
   - restituisce: un booleano, true se la dashboard ha preso il controllo effettivamente
 - */api/control*
-  - richiesta dove viene passato un json `{ "position": <val> }`
+  - richiesta dove viene passato un json `{ "position": <val> }` in POST
   - scopo: regolazione effettiva del motore, una volta che la dashboard ha preso il controllo
   - `<val>` è un float nel range [0,1] dove indica la percentuale di apertura della finestra
   - restituisce: un oggetto json uguale a quello di partenza che contiene la posizione attuale del motore
@@ -18,6 +18,10 @@ Route di controllo manuale remoto
   - scopo: restituizione esplicita del controllo dalla dashboard alla control unit
   - ci deve essere un timer lato control unit per cui se non riceve nessuna richiesta dalla dashboard entro K secondi, cede il controllo in automatico, altrimenti ci si imbatte in deadlock del sistema
   - restituisce: niente (?)
+- */api/fixAlarm*
+  - richiesta senza nessun dato inviato
+  - scopo: resettare lo stato del sistema una volta che entra in uno stato d'allarme
+  - restituisce: niente
 
 Route di ottenimento dati
 - */api/history*

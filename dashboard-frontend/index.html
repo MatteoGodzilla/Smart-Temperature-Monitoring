@@ -26,21 +26,26 @@
             <span id="temp">69°C</span>
             <br/>
             <span class="header">Current window open %:</span>
-            <span id="window%">100%</span>
+            <span id="window">100%</span>
+            <br/>
+            <span class="header">Chart updates:</span>
+            <span id="pause">running</span>
             <br/>
         </section>
         <h1>Control</h1>
         <section>
-            <button id="requestControl">Request control</button>
+            <button id="pauseChart" onclick="pauseChart()">Pause chart</button>
+            <button id="requestControl" onclick="requestButtonOnClick()" >Request control</button>
             <label for="windowOpenPerc">Window open %:</label>
-            <span id="userWindow%">50%</span>
-            <input type="range" name="windowOpenPerc" id="windowOpenPerc" disabled>
-            <button id="fixAlarm" disabled>Fix alarm</button>
+            <span id="userWindow">50%</span>
+            <input type="range" name="windowOpenPerc" id="windowOpenSlider" onchange="control()" min="0" max="1" step="0.01" disabled>
+            <button id="fixAlarmButton" onclick="fixAlarm()" disabled>Fix alarm</button>
         </section>
     </aside>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="myChart.js"></script>
     <script src="dashboard.js"></script>
 </body>
 

@@ -61,4 +61,5 @@ aside > section > button, aside > section > input{
 
 aside > section > button {
     font-size: 1.2em;
+    margin-bottom: 5px;
 }
