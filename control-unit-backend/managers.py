@@ -19,7 +19,7 @@ class Manager():
         self.window_controller:WindowManager = WindowManager()
         self.state_manager:StatusManager = StatusManager()
 
-    # Writer (Thread MQTT) | Reader (Thread Flask). TODO CHECK IF POSSIBILE MANAGE HERE IF DATAPOINT LIST IS EMPTY
+    # Writer (Thread MQTT) | Reader (Thread Flask).
     def get_latest(self) -> dict:
         if not self.temperature_access.is_empty():
             datapoint = self.temperature_access.get_datapoint(index=-1)
