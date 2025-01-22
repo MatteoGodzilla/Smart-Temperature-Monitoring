@@ -16,8 +16,7 @@ class TemperatureAccessManager():
         self.datapoints:deque = deque(maxlen=self.DATAPOINT_BUFFER_SIZE)
 
     # This method will be called when a new datapoint is received from ESP32 using MQTT.
-    # TODO: Manage race conditions between writer (Thread MQTT) and reader (Thread Flask).
-    def enqueueDataPoint(self, timestamp:float, temperature:float, window:float) -> None:
+    def enqueue_datapoint(self, timestamp:float, temperature:float, window:float) -> None:
         with self.datapoint_condition:
             while self.read_datapoint or self.write_datapoint:
                 self.datapoint_condition.wait()
@@ -38,7 +37,7 @@ class TemperatureAccessManager():
             self.write_datapoint = False
             self.datapoint_condition.notify_all()
 
-    def getDataPoints(self) -> deque:
+    def get_datapoints(self) -> deque:
         with self.datapoint_condition:
             while self.write_datapoint:
                 self.datapoint_condition.wait()
@@ -51,7 +50,17 @@ class TemperatureAccessManager():
             self.datapoint_condition.notify_all()
         return datapoints
 
-    def getDataPoint(self, index=0) -> dict:
+    def is_empty(self):
+        with self.datapoint_condition:
+            while self.write_datapoint:
+                self.datapoint_condition.wait()
+            self.read_datapoint = True
+            empty:bool = len(self.datapoints) == 0
+            self.read_datapoint = False
+            self.datapoint_condition.notify_all()
+        return empty
+
+    def get_datapoint(self, index=0) -> dict:
         with self.datapoint_condition:
             while self.write_datapoint:
                 self.datapoint_condition.wait()
@@ -64,7 +73,7 @@ class TemperatureAccessManager():
             self.datapoint_condition.notify_all()
         return datapoint
 
-    def getMinTemperature(self) -> float:
+    def get_min_temperature(self) -> float:
         with self.datapoint_condition:
             while self.write_datapoint:
                 self.datapoint_condition.wait()
@@ -77,7 +86,7 @@ class TemperatureAccessManager():
             self.datapoint_condition.notify_all()
         return min_temperature
 
-    def getMaxTemperature(self) -> float:
+    def get_max_temperature(self) -> float:
         with self.datapoint_condition:
             while self.write_datapoint:
                 self.datapoint_condition.wait()
@@ -90,7 +99,7 @@ class TemperatureAccessManager():
             self.datapoint_condition.notify_all()
         return max_temperature
 
-    def getAverageTemperature(self) -> float:
+    def get_average_temperature(self) -> float:
         with self.datapoint_condition:
             while self.write_datapoint:
                 self.datapoint_condition.wait()
