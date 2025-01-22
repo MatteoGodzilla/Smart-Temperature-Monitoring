@@ -55,7 +55,6 @@ class Manager():
         return self.state_manager.get_active()
 
     def change_mode(self, mode:Mode) -> None:
-        print(mode)
         if mode.value == Mode.AUTOMATIC.value:
             self.window_controller.set_mode(mode)
             self.control_timer.reset()
