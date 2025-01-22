@@ -3,11 +3,13 @@ from threading import Thread
 from managers import *
 from werkzeug.serving import BaseWSGIServer, make_server
 import logging
+import flask_cors
 
 class FlaskThread(Thread):
     def __init__(self, system_manager:Manager):
         super(FlaskThread, self).__init__()
         self.flask_app:Flask = Flask(__name__)
+        flask_cors.CORS(self.flask_app)
         # Disable flask logger
         logging.getLogger("werkzeug").disabled = True
         self.manager:Manager = system_manager
@@ -15,7 +17,7 @@ class FlaskThread(Thread):
         self.flask_app.add_url_rule(rule="/api/history", view_func=self.send_all_data)
         self.flask_app.add_url_rule(rule="/api/isFree", view_func=self.can_take_control)
         self.flask_app.add_url_rule(rule="/api/takeControl", view_func=self.take_control)
-        self.flask_app.add_url_rule(rule="/api/control", view_func=self.control_action)
+        self.flask_app.add_url_rule(rule="/api/control", view_func=self.control_action, methods=["POST"])
         self.flask_app.add_url_rule(rule="/api/fixAlarm", view_func=self.manage_alarm)
         self.flask_app.add_url_rule(rule="/api/releaseControl", view_func=self.release_control)
         self.control_timer:Timer = Timer(wait_time=100)
@@ -25,7 +27,7 @@ class FlaskThread(Thread):
 
     def generate_cors_response(self, data="") -> Response:
         response = jsonify(message=data)
-        response.headers.add("Access-Control-Allow-Origin", "*")
+        #response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
     def send_temperature(self) -> Response:
@@ -41,11 +43,16 @@ class FlaskThread(Thread):
         return self.generate_cors_response(data={"free": self.manager.check_if_active(Mode.AUTOMATIC)})
 
     def control_action(self) -> Response:
-        if self.manager.check_if_active(Mode.REMOTE_MANUAL):
-            print("Flask Thread - Control command received: ", request.json)
-        else:
-            print("Flask Thread - Control command ignored, the control unit is not in REMOTE MANUAL mode.")
-        return self.generate_cors_response()
+        try:
+            if self.manager.check_if_active(Mode.REMOTE_MANUAL):
+                print("Flask Thread - Control command received: ", request.get_json(force=True))
+            else:
+                print("Flask Thread - Control command ignored, the control unit is not in REMOTE MANUAL mode.")
+            return self.generate_cors_response(data=True)
+        except Exception:
+            print("Flask Thread - Received something unusual on api/control: ", request.get_json(force=True))
+            return self.generate_cors_response(data=False)
+
 
     def manage_alarm(self) -> Response:
         print("Flask Thread - Fixing alarm.")
