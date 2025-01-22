@@ -28,20 +28,13 @@ const fixAlarmButton = document.getElementById("fixAlarmButton");
 let dashboardHasControl = false;
 let lastTick = 0;
 let chartPaused = false;
-let dataPointsBuffer = []
+let dataPointsBuffer = [];
+let isControlFree = false;
 
 async function isFree(){
     const url = route + "/isFree";
     const response = await fetch(url).then(res => res.json());
-    const free = response.message.free;
-
-    if(free){
-        //available to take control
-        requestControlButton.removeAttribute("disabled");
-    } else {
-        //not available to take control
-        requestControlButton.setAttribute("disabled", "disabled");
-    }
+    isControlFree = response.message.free;
 }
 
 async function takeControl(){
@@ -49,6 +42,7 @@ async function takeControl(){
         const url = route + "/takeControl";
         const available = await fetch(url).then(res => res.json);
         if(available){
+            console.log('Got Control!');
             enableControls();
         }
     }
@@ -61,9 +55,12 @@ async function control(){
         controlWindowSpan.innerText = Math.round(controlSlider.value * 100) + "%";
         await fetch(url,{
             method:"POST",
-            body:{
-                "position":windowSpan.value
-            }
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                "position":controlSlider.value
+            })
         });
     }
 }
@@ -122,7 +119,22 @@ async function getStatus(){
     pauseSpan.innerText = chartPaused ? "Paused" : "Running";
 
     pauseChartButton.innerText = chartPaused ? "Resume chart" : "Pause chart";
-    requestControlButton.innerText = dashboardHasControl ? "Release control" : "Request control";
+
+    if(dashboardHasControl){
+        //this dashboard currently has the control
+        requestControlButton.innerText = "Release control";
+        requestControlButton.removeAttribute("disabled");
+    } else {
+        if(isControlFree){
+            //we can take the control
+            requestControlButton.innerText = "Request control";
+            requestControlButton.removeAttribute("disabled");
+        } else {
+            //someone else has control, so we cannot get it
+            requestControlButton.innerText = "Cannot request control";
+            requestControlButton.setAttribute("disabled", "disabled");
+        }
+    }
 
     dataPointsBuffer.push(dataPoint);
 
