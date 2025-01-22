@@ -41,8 +41,11 @@ class FlaskThread(Thread):
         return self.generate_cors_response(data={"free": self.manager.check_if_active(Mode.AUTOMATIC)})
 
     def control_action(self) -> Response:
-        print("Flask Thread - Control command received: ", request.args)
-        return self.generate_cors_response(data=True) #TODO: Maybe change later
+        if self.manager.check_if_active(Mode.REMOTE_MANUAL):
+            print("Flask Thread - Control command received: ", request.json)
+        else:
+            print("Flask Thread - Control command ignored, the control unit is not in REMOTE MANUAL mode.")
+        return self.generate_cors_response()
 
     def manage_alarm(self) -> Response:
         print("Flask Thread - Fixing alarm.")
@@ -62,8 +65,8 @@ class FlaskThread(Thread):
         print("Flask Thread - Received release remote control request.")
         if not ( self.manager.check_if_active(Mode.AUTOMATIC) or self.manager.check_if_active(Mode.LOCAL_MANUAL) ):
             self.manager.change_mode(Mode.AUTOMATIC)
-            return self.generate_cors_response(data=True) #TODO: Maybe change later
-        return self.generate_cors_response(data=False) #TODO: Maybe change later
+            return self.generate_cors_response(data=True)
+        return self.generate_cors_response(data=False)
 
 
     def run(self):
