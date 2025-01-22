@@ -6,7 +6,6 @@ from secondary_managers import WindowManager, TemperatureAccessManager, StatusMa
 
 '''
 TODO:
-    -> MANAGE RACE CONDITIONS BETWEEN WRITERS-READERS.
     -> ADD LOGIC TO MANAGE:
         -> AUTOMATIC (based on temperature change status, calculate new percentage and send it on Serial Thread)
         -> REMOTE MANUAL CONTROL (read from dashboard and send on Serial Thread)

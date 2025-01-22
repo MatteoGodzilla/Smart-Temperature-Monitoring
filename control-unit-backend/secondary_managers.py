@@ -197,7 +197,14 @@ class StatusManager():
                 self.condition.notify_all()
 
     def fix_alarm(self) -> None:
-        self.alarm_timer.reset()
+        with self.condition:
+            while self.read_state or self.update_state:
+                self.condition.wait()
+            self.update_state = True
+            self.alarm_timer.reset()
+            self.active = Status.TOO_HOT
+            self.update_state = False
+            self.condition.notify_all()
 
     def get_active(self) -> Status:
         with self.condition:

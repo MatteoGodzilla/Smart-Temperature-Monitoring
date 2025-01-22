@@ -17,7 +17,7 @@ if __name__=="__main__":
             time.sleep(1)
             manager.update()
     except (KeyboardInterrupt, Exception):
-        print("Main Thread: Shutting down")
+        print("Main Thread - Shutting down")
         flask_server.close()
         mqtt_comunicator.close()
         serial_connection.close()
