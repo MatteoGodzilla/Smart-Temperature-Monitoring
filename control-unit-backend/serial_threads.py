@@ -3,20 +3,17 @@ from managers import *
 import serial
 
 class SerialThread(Thread):
-    SERIALPORT = "COM3"
-    BAUDRATE = 9600
-
-    def __init__(self, system_manager:Manager):
+    def __init__(self, system_manager:Manager, baudrate:int, port:str):
         super(SerialThread, self).__init__()
         self.manager:Manager = system_manager
         self.running = True
         try:
-            self.serial_line = serial.Serial(baudrate=self.BAUDRATE, port=self.SERIALPORT)
+            self.serial_line = serial.Serial(baudrate=baudrate, port=port)
             self.serial_line.close()
         except serial.SerialException:
             self.serial_line = serial.Serial()
-            self.serial_line.port = self.SERIALPORT
-            self.serial_line.baudrate = self.BAUDRATE
+            self.serial_line.port = port
+            self.serial_line.baudrate = baudrate
             self.serial_line.close()
 
     def run(self):

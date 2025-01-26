@@ -1,7 +1,7 @@
 from managers import Manager
-from FlaskThread import *
-from SerialThread import *
-from MQTTThread import *
+from http_threads import *
+from serial_threads import *
+from mqtt_threads import *
 import time
 '''
     This is the main thread and the control-unit entry point that initialize, starts and close all other threads.
@@ -11,10 +11,17 @@ import time
     -> The MQTT thread will manage communication via MQTT broker between control-unit and ESP32 subsystem.
 '''
 if __name__=="__main__":
-    manager:Manager = Manager(max_datapoints=20)             # Common manager initialization.
-    flask_server = FlaskThread(system_manager=manager)       # Initialization of Flask thread.
-    serial_connection = SerialThread(system_manager=manager) # Initialization of Serial Line thread.
-    mqtt_comunicator = MQTTThread(system_manager=manager)    # Initialization of MQTT thread.
+    SERIAL_PORT:str = "COM3"
+    SERIAL_BAUDRATE:int = 9600
+    TUPDATE:float = 0.5
+    manager:Manager = Manager(max_datapoints=20)          # Common manager initialization.
+    flask_server = FlaskThread(system_manager=manager)    # Initialization of Flask thread.
+    serial_connection = SerialThread(                     # Initialization of Serial Line thread.
+        system_manager = manager,
+        baudrate = SERIAL_BAUDRATE,
+        port = SERIAL_PORT
+    )
+    mqtt_comunicator = MQTTThread(system_manager=manager) # Initialization of MQTT thread.
     # Main thread starts all communication threads
     mqtt_comunicator.start()
     flask_server.start()
@@ -22,7 +29,7 @@ if __name__=="__main__":
     # Neverending loop that updates the manager and wait to external Keyboard Interrupt to end the execution.
     try:
         while True:
-            time.sleep(0.5)
+            time.sleep(TUPDATE)
             manager.update()
     except (KeyboardInterrupt, Exception):
         # Closing all threads and shutting down the main thread.
