@@ -11,7 +11,7 @@ import time
     -> The MQTT thread will manage communication via MQTT broker between control-unit and ESP32 subsystem.
 '''
 if __name__=="__main__":
-    SERIAL_PORT:str = "COM3"
+    SERIAL_PORT:str = "COM5"
     SERIAL_BAUDRATE:int = 9600
     TUPDATE:float = 0.5
     manager:Manager = Manager(max_datapoints=20)          # Common manager initialization.

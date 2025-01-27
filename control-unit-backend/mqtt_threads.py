@@ -25,11 +25,11 @@ class MQTTThread(Thread):
     def establish_connection(self, client, userdata, flags, rc):
         print("MQTT Thread - Successfully connected, received CONNACK with code %d." % (rc))
         self.client.subscribe(topic=self.TEMPERATURE_TOPIC)
-        self.client.subscribe(topic=self.FREQUENCY_TOPIC)
+        #self.client.subscribe(topic=self.FREQUENCY_TOPIC)
 
     def receive_message(self, client, userdata, message:mqtt.MQTTMessage):
-        fixed_payload:dict = json.loads((message.payload).decode("utf-8"))
         try:
+            fixed_payload:dict = json.loads((message.payload).decode("utf-8"))
             print("MQTT Thread - Received new message: ", fixed_payload,
                 " on topic:", message.topic,
                 " with QoS:", str(message.qos))
@@ -37,7 +37,7 @@ class MQTTThread(Thread):
             self.manager.receive_temperature(fixed_payload["temperature"])
             self.client.publish(self.FREQUENCY_TOPIC, self.manager.get_mqtt_frequency_packed())
         except (KeyError, UnicodeDecodeError, ValueError):
-            print("MQTT Thread - Ignored received message.")
+            print("MQTT Thread - Ignored received message.", fixed_payload)
 
     def topic_subscribe(self, client, userdata, mid, granted_qos):
         print("MQTT Thread - Successfully subscribed on topic.")
