@@ -16,6 +16,9 @@ const MODE_REMOTE_MANUAL = 2;
 const statusSpan = document.getElementById("status");
 const modeSpan = document.getElementById("mode");
 const tempSpan = document.getElementById("temp");
+const minSpan = document.getElementById("min");
+const avgSpan = document.getElementById("avg");
+const maxSpan = document.getElementById("max");
 const windowSpan = document.getElementById("window");
 const pauseSpan = document.getElementById("pause");
 
@@ -114,7 +117,10 @@ async function getStatus(){
     //update aside
     statusSpan.innerText = tempStatusToString(status);
     modeSpan.innerText = modeToString(mode);
-    tempSpan.innerText = dataPoint.temperature + "°C"
+    tempSpan.innerText = dataPoint.temperature + "°C";
+    minSpan.innerText = min.toFixed(3) + "°C";
+    avgSpan.innerText = avg.toFixed(3) + "°C";
+    maxSpan.innerText = max.toFixed(3) + "°C";
     windowSpan.innerText = (dataPoint.window * 100).toFixed(0) + "%"
     pauseSpan.innerText = chartPaused ? "Paused" : "Running";
 
